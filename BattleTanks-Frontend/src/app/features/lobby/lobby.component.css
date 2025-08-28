@@ -1,0 +1,76 @@
+.grid-bg {
+  background:
+    radial-gradient(circle at top, rgba(50,120,200,0.07) 0%, transparent 60%),
+    linear-gradient(rgba(8,18,40,0.9), rgba(8,18,40,0.95)),
+    repeating-linear-gradient(0deg, rgba(50,120,200,0.04) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(90deg, rgba(50,120,200,0.04) 0 1px, transparent 1px 60px);
+  background-color: #071225;
+}
+
+.pixel-card {
+  background: #0c1b33;
+  border: 3px solid #1f3b66;
+  box-shadow: 0 0 18px rgba(100,180,255,0.25), inset 0 0 12px rgba(10,40,100,0.6);
+  border-radius: 10px;
+  color: #d9e9ff;
+  position: relative;
+}
+
+.pixel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  margin-bottom: 18px;
+  border-bottom: 3px solid rgba(100,180,255,0.4);
+}
+.pixel-title {
+  font-family: "Press Start 2P", system-ui, monospace;
+  font-size: 18px;
+  color: #8fc9ff;
+  text-shadow: 0 0 8px rgba(80,160,255,0.6);
+}
+.pixel-sub {
+  font-size: 11px;
+  color: #6fb0ff;
+  font-family: monospace;
+  letter-spacing: .08em;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.tab-btn {
+  flex: 1;
+  font-family: "Press Start 2P", system-ui, monospace;
+  font-size: 11px;
+  text-align: center;
+  padding: 6px 0;
+  border: 2px solid #2a4f7a;
+  background: #0a1a33;
+  color: #8fc9ff;
+  cursor: pointer;
+  transition: all .15s;
+}
+.tab-btn.active {
+  background: #2a4f7a;
+  color: #d9e9ff;
+  text-shadow: 0 0 6px rgba(80,160,255,0.8);
+}
+
+.scanline {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.03) 0,
+    rgba(255,255,255,0.03) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  mix-blend-mode: overlay;
+  border-radius: 8px;
+}

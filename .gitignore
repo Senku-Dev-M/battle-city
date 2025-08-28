@@ -1,0 +1,46 @@
+# Ignore build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]emp/
+
+# Ignore all across subfolders (Application, Domain, etc.)
+**/[Bb]in/
+**/[Oo]bj/
+**/[Ll]og/
+**/[Tt]emp/
+
+# Rider / JetBrains
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# Backup & logs
+*.bak
+*.Backup
+*.log
+*.pdb
+*.tmp
+*.svclog
+
+# Entity Framework migrations metadata
+*.jfm
+
+# Auto-generated files
+*.g.i.cs
+*.AssemblyAttributes.cs
+*.GeneratedMSBuildEditorConfig.editorconfig
+*.designer.cs
+
+# Windows junk
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/

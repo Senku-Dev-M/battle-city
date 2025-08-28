@@ -1,0 +1,37 @@
+<div class="pixel-card p-6 relative">
+  <form (ngSubmit)="submit()" [formGroup]="form" class="form-grid">
+    <div>
+      <label class="pixel-label">Nombre</label>
+      <input
+        class="pixel-input"
+        type="text"
+        formControlName="name"
+        placeholder="Arena Delta"
+      />
+    </div>
+
+    <div>
+      <label class="pixel-label">Max. jugadores</label>
+      <input
+        class="pixel-input"
+        type="number"
+        formControlName="maxPlayers"
+        min="2"
+        max="32"
+      />
+    </div>
+
+    <div class="full pixel-checkbox">
+      <input type="checkbox" formControlName="isPublic" />
+      <span>Sala pública</span>
+    </div>
+
+    <div class="full">
+      <button type="submit" [disabled]="creating()" class="pixel-btn w-full">
+        @if (creating()) { <span class="animate-pulse">CREANDO...</span> } @else { CREAR }
+      </button>
+    </div>
+  </form>
+
+  <div class="scanline"></div>
+</div>

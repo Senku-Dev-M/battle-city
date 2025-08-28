@@ -1,0 +1,54 @@
+<div class="min-h-screen grid place-items-center grid-bg px-3">
+  <div class="w-full max-w-6xl pixel-card p-6">
+    <!-- Header -->
+    <div class="pixel-header">
+      <h1 class="pixel-title">BATTLE TANKS</h1>
+      <span class="pixel-sub">CENTRO DE COMANDO</span>
+    </div>
+
+    <!-- Mensaje de error -->
+    @if (error(); as err) {
+      <div class="mb-4 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+        {{ err }}
+      </div>
+    }
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Columna izquierda -->
+      <div>
+        <div class="tab-buttons">
+          <button
+            class="tab-btn"
+            [class.active]="activeTab === 'create'"
+            (click)="setTab('create')">
+            Crear
+          </button>
+
+          <button
+            class="tab-btn"
+            [class.active]="activeTab === 'join'"
+            (click)="setTab('join')">
+            Unirse
+          </button>
+        </div>
+
+        <!-- Tab dinámica -->
+        <app-create-room-form *ngIf="activeTab === 'create'"></app-create-room-form>
+        <app-join-room-form *ngIf="activeTab === 'join'"></app-join-room-form>
+      </div>
+
+      <!-- Columna derecha -->
+      <div>
+        <app-rooms-list></app-rooms-list>
+      </div>
+    </div>
+
+    <!-- Estado -->
+    @if (loading()) {
+      <div class="mt-4 text-xs text-blue-300">Sincronizando salas...</div>
+    }
+
+    <div class="scanline"></div>
+  </div>
+</div>

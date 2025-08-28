@@ -1,0 +1,42 @@
+<div class="min-h-screen grid place-items-center grid-bg px-3">
+  <div class="w-full max-w-6xl pixel-card p-4 relative">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="pixel-title">BATTLE TANKS · SALA</h1>
+      <a routerLink="/lobby" class="text-blue-300 underline text-xs">Volver al lobby</a>
+    </div>
+
+    @if (error(); as err) {
+      <div class="mb-3 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+        {{ err }}
+        <a routerLink="/lobby" class="ml-2 underline text-blue-300">Volver</a>
+      </div>
+    }
+
+    @if (joined()) {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 relative">
+        @if (!myAlive()) {
+          <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-red-300 rounded-md px-4 py-8 space-y-3">
+            <h2 class="text-lg">¡Has perdido!</h2>
+            <p class="text-xs">Te quedaste sin vidas.</p>
+            <a routerLink="/lobby" class="pixel-btn text-xs">Volver al lobby</a>
+          </div>
+        }
+        <div class="lg:col-span-2 relative">
+          @if (myHealth() !== null) {
+            <div class="absolute top-0 right-0 mt-1 mr-2 text-xs text-yellow-300 font-mono select-none">
+              Vidas: {{ myHealth() }}
+            </div>
+          }
+          <app-room-canvas />
+        </div>
+        <div>
+          <app-chat-panel />
+        </div>
+      </div>
+    } @else {
+      <div class="text-blue-300 text-sm">Conectando a la sala...</div>
+    }
+
+    <div class="scanline"></div>
+  </div>
+</div>

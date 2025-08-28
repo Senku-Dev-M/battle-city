@@ -1,0 +1,67 @@
+<div class="min-h-screen grid place-items-center grid-bg px-3">
+  <div class="pixel-card p-6">
+    <h1 class="pixel-title">BATTLE TANKS</h1>
+    <p class="text-center text-xs mb-6 tracking-wider text-[#7fd4ff]">REGISTRO</p>
+
+    <!-- errores -->
+    @if (error(); as err) {
+      <div class="mb-4 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+        {{ err }}
+      </div>
+    }
+
+    @if (passwordsMismatch()) {
+      <div class="mb-4 rounded-md border border-amber-400 bg-amber-900/40 text-amber-200 px-4 py-2 text-xs">
+        Las contraseñas no coinciden.
+      </div>
+    }
+
+    <form (ngSubmit)="submit()" [formGroup]="form" class="space-y-4">
+      <!-- usuario -->
+      <div>
+        <label class="pixel-label">Usuario</label>
+        <input type="text" formControlName="username" class="pixel-input" placeholder="tank-ace" />
+        @if (f.username.touched && f.username.invalid) {
+          <p class="hint-error">Mínimo 3 caracteres.</p>
+        }
+      </div>
+
+      <!-- email -->
+      <div>
+        <label class="pixel-label">Email</label>
+        <input type="email" formControlName="email" class="pixel-input" placeholder="you@battle.tank" />
+        @if (f.email.touched && f.email.invalid) {
+          <p class="hint-error">Email inválido.</p>
+        }
+      </div>
+
+      <!-- contraseña -->
+      <div>
+        <label class="pixel-label">Contraseña</label>
+        <input type="password" formControlName="password" class="pixel-input" placeholder="••••••••" />
+        @if (f.password.touched && f.password.invalid) {
+          <p class="hint-error">Mínimo 6 caracteres.</p>
+        }
+      </div>
+
+      <!-- confirmar -->
+      <div>
+        <label class="pixel-label">Confirmar contraseña</label>
+        <input type="password" formControlName="confirmPassword" class="pixel-input" placeholder="••••••••" />
+        @if (f.confirmPassword.touched && f.confirmPassword.invalid) {
+          <p class="hint-error">Mínimo 6 caracteres.</p>
+        }
+      </div>
+
+      <!-- botón -->
+      <button type="submit" [disabled]="loading()" class="pixel-btn w-full">
+        @if (loading()) { <span class="animate-pulse">CREANDO...</span> } @else { CREAR CUENTA }
+      </button>
+
+      <p class="text-center text-xs text-[#7fd4ff]">
+        ¿Ya tienes cuenta?
+        <a class="underline hover:text-white" routerLink="/login">Inicia sesión</a>
+      </p>
+    </form>
+  </div>
+</div>
