@@ -25,6 +25,8 @@ export class SignalRService {
   readonly playerDied$ = new Subject<string>();
   readonly reconnected$ = new Subject<void>();
   readonly disconnected$ = new Subject<void>();
+  readonly mapState$ = new Subject<any[]>();
+  readonly cellDestroyed$ = new Subject<any>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -80,6 +82,16 @@ export class SignalRService {
     this.hub.on('playerDied', (playerId: string) => {
       console.log('[SignalR] playerDied:', playerId);
       this.playerDied$.next(playerId);
+    });
+
+    this.hub.on('mapState', (map: any[]) => {
+      console.log('[SignalR] mapState:', map);
+      this.mapState$.next(map);
+    });
+
+    this.hub.on('cellDestroyed', (cell: any) => {
+      console.log('[SignalR] cellDestroyed:', cell);
+      this.cellDestroyed$.next(cell);
     });
 
     this.hub.on('eventHistory', (history: any) => {
@@ -192,5 +204,17 @@ export class SignalRService {
     if (!this.hub) throw new Error('Hub not connected');
     console.log('[SignalR] reportBulletCollision:', bulletId);
     await this.hub.invoke('ReportObstacleHit', bulletId);
+  }
+
+  async getMap(): Promise<void> {
+    if (!this.hub) throw new Error('Hub not connected');
+    console.log('[SignalR] getMap');
+    await this.hub.invoke('GetMap');
+  }
+
+  async destroyCell(x: number, y: number): Promise<void> {
+    if (!this.hub) throw new Error('Hub not connected');
+    console.log('[SignalR] destroyCell:', { x, y });
+    await this.hub.invoke('DestroyCell', x, y);
   }
 }

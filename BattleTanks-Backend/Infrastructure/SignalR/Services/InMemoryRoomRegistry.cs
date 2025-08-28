@@ -188,8 +188,8 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
             for (int x = 0; x < layout.GetLength(1); x++)
             {
                 int val = layout[y, x];
-                bool destructible = val == 1;
-                room.MapCells[(x, y)] = new MapCellDto(x, y, destructible, false);
+                bool destructible = val == 1 || val == 3;
+                room.MapCells[(x, y)] = new MapCellDto(x, y, val, destructible, false);
             }
         }
 
