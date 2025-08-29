@@ -78,6 +78,10 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   private lastTs = 0;
   private pressed = new Set<string>();
 
+  // Canvas logical dimensions (world coordinates remain fixed at this size)
+  private readonly WORLD_WIDTH = 800;
+  private readonly WORLD_HEIGHT = 480;
+
   private px = signal(300);
   private py = signal(200);
   private rot = signal(0);
@@ -167,11 +171,21 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   private resizeCanvas(initial = false) {
     const wrap = this.wrapRef.nativeElement;
     const canvas = this.canvasRef.nativeElement;
-    let w = wrap.clientWidth || wrap.getBoundingClientRect().width || 800;
+
+    // Calculate display size while keeping the logical canvas size fixed.
+    let w = wrap.clientWidth || wrap.getBoundingClientRect().width || this.WORLD_WIDTH;
     w = Math.max(320, Math.floor(w));
-    const h = Math.min(520, Math.round(w * 0.6));
-    canvas.width = w;
-    canvas.height = h;
+    const h = Math.min(520, Math.round(w * (this.WORLD_HEIGHT / this.WORLD_WIDTH)));
+
+    // Only set the canvas width/height once to keep world coordinates stable.
+    if (initial) {
+      canvas.width = this.WORLD_WIDTH;
+      canvas.height = this.WORLD_HEIGHT;
+    }
+
+    // Scale the canvas via CSS so the drawing surface remains consistent
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
   }
 
   @HostListener('window:keydown', ['$event'])
