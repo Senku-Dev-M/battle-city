@@ -18,7 +18,7 @@ import { selectUser } from '../../auth/store/auth.selectors';
 import { roomActions } from '../store/room.actions';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { BulletHitReportDto } from '../../../core/models/game.models';
-import { BATTLE_CITY_MAP } from '../../../core/data/maps/classic-arena.map';
+import { Subscription } from 'rxjs';
 import { effect } from '@angular/core';
 
 @Component({
@@ -88,10 +88,35 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   private signalR = inject(SignalRService);
 
   /**
-   * The map used for rendering obstacles. It is loaded from a static
-   * definition and mutated when destructible blocks are hit by bullets.
+   * The map used for rendering obstacles. It is populated from the server
+   * and updated when cells are destroyed.
    */
-  private map = BATTLE_CITY_MAP;
+  private map = { width: 0, height: 0, cells: [] as number[][] };
+  private subs: Subscription[] = [];
+
+  constructor() {
+    this.subs.push(
+      this.signalR.mapState$.subscribe((cells: any[]) => {
+        if (!cells || cells.length === 0) return;
+        const width = Math.max(...cells.map(c => c.x)) + 1;
+        const height = Math.max(...cells.map(c => c.y)) + 1;
+        const grid = Array.from({ length: height }, () => Array(width).fill(0));
+        for (const cell of cells) {
+          const val = cell.isDestroyed ? 0 : cell.type;
+          grid[cell.y][cell.x] = val;
+        }
+        this.map = { width, height, cells: grid };
+      })
+    );
+
+    this.subs.push(
+      this.signalR.cellDestroyed$.subscribe((cell: any) => {
+        if (this.map.cells[cell.y]) {
+          this.map.cells[cell.y][cell.x] = 0;
+        }
+      })
+    );
+  }
 
   /**
    * Indicates whether the initial spawn position for the current player has been applied.  When
@@ -126,11 +151,13 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     this.ctx = canvas.getContext('2d');
     this.resizeCanvas(true);
     this.running = true;
+    this.signalR.getMap().catch(() => {});
     requestAnimationFrame(this.loop);
   }
 
   ngOnDestroy(): void {
     this.running = false;
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   @HostListener('window:resize') onWindowResize() {
@@ -345,17 +372,13 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       if (gx >= 0 && gy >= 0 && gx < gridW2 && gy < gridH2) {
         const cell = this.map.cells[gy][gx];
         if (cell === 1 || cell === 3) {
-          // Destroy destructible block locally
-          this.map.cells[gy][gx] = 0;
-          // Mark bullet as reported so shooter can fire again
           if (!this.reportedBullets.has(b.bulletId)) {
             this.reportedBullets.add(b.bulletId);
-            // Notify the server that the bullet has collided with a map obstacle
+            this.signalR.destroyCell(gx, gy).catch(() => {});
             this.signalR.reportBulletCollision(b.bulletId).catch(() => {});
           }
           return;
         } else if (cell === 2) {
-          // Indestructible block consumes the bullet
           if (!this.reportedBullets.has(b.bulletId)) {
             this.reportedBullets.add(b.bulletId);
             this.signalR.reportBulletCollision(b.bulletId).catch(() => {});
