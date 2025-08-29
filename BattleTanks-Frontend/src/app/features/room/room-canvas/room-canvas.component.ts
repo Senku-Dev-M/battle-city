@@ -150,6 +150,12 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     }
   });
 
+  private _stopInputEffect = effect(() => {
+    if (!this.isCurrentPlayerAlive()) {
+      this.pressed.clear();
+    }
+  });
+
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d');

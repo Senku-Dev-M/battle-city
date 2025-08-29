@@ -166,6 +166,13 @@ public partial class GameHub : Hub
         if (!_tracker.TryGet(Context.ConnectionId, out var info))
             throw new HubException("not_in_room");
 
+        if (_playerLivesByRoom.TryGetValue(info.RoomCode, out var livesDict)
+            && livesDict.TryGetValue(info.UserId, out var lives)
+            && lives <= 0)
+        {
+            return;
+        }
+
         if (float.IsNaN(position.X) || float.IsInfinity(position.X) ||
             float.IsNaN(position.Y) || float.IsInfinity(position.Y) ||
             float.IsNaN(position.Rotation) || float.IsInfinity(position.Rotation))

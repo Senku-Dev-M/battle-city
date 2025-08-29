@@ -16,6 +16,13 @@ public partial class GameHub : Hub
     {
         if (!_tracker.TryGet(Context.ConnectionId, out var info)) throw new HubException("not_in_room");
 
+        if (_playerLivesByRoom.TryGetValue(info.RoomCode, out var livesDict)
+            && livesDict.TryGetValue(info.UserId, out var lives)
+            && lives <= 0)
+        {
+            return string.Empty;
+        }
+
         var normalizedRotation = NormalizeAngle(rotation);
         var clampedSpeed = Clamp(speed, 0.1f, 100f);
 
