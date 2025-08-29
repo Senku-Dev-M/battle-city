@@ -85,8 +85,8 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
     public async Task JoinAsync(string roomCode, string userId, string username, string connectionId)
     {
         var room = await EnsureRoomByCodeAsync(roomCode);
-        var state = new PlayerStateDto(userId, username, 0, 0, 0, 5, true);
-        room.Players[userId] = state;
+          var state = new PlayerStateDto(userId, username, 0, 0, 0, 3, true, 0);
+          room.Players[userId] = state;
         _connIndex[connectionId] = (roomCode, userId);
     }
 
@@ -108,6 +108,18 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
         if (_byId.TryGetValue(roomId, out var r))
             return Task.FromResult<IReadOnlyCollection<PlayerStateDto>>(r.Players.Values.ToArray());
         return Task.FromResult<IReadOnlyCollection<PlayerStateDto>>(Array.Empty<PlayerStateDto>());
+    }
+
+    public Task UpdatePlayerStatsAsync(string roomCode, string playerId, int lives, int score, bool isAlive)
+    {
+        if (_codeToId.TryGetValue(roomCode, out var roomId) && _byId.TryGetValue(roomId, out var room))
+        {
+            if (room.Players.TryGetValue(playerId, out var state))
+            {
+                room.Players[playerId] = state with { Lives = lives, Score = score, IsAlive = isAlive };
+            }
+        }
+        return Task.CompletedTask;
     }
 
     // Ensure room exists and initialize map if missing

@@ -227,7 +227,8 @@ public class GameService : IGameService
             player.Position.Y,
             player.Rotation,
             player.Health,
-            player.IsAlive
+            player.IsAlive,
+            player.SessionScore
         );
     }
 }

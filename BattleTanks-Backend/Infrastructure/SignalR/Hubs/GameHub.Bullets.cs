@@ -9,6 +9,7 @@ public partial class GameHub : Hub
 {
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, BulletStateDto>> _bulletsByRoom = new();
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, int>> _playerLivesByRoom = new();
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, int>> _playerScoresByRoom = new();
 
     // Spawn a bullet with cooldown and lifetime checks
     public async Task<string> SpawnBullet(float x, float y, float rotation, float speed)
@@ -92,6 +93,26 @@ public partial class GameHub : Hub
                 var newLives = Math.Max(0, lives - 1);
                 roomLives[dto.TargetPlayerId] = newLives;
 
+                if (!_playerScoresByRoom.TryGetValue(roomCode, out var roomScores))
+                {
+                    roomScores = new ConcurrentDictionary<string, int>();
+                    _playerScoresByRoom[roomCode] = roomScores;
+                }
+
+                roomScores.TryGetValue(updated.ShooterId, out var shooterScore);
+                if (newLives <= 0)
+                {
+                    shooterScore = roomScores.AddOrUpdate(updated.ShooterId, 1, (_, s) => s + 1);
+                }
+
+                // update registry
+                await _rooms.UpdatePlayerStatsAsync(roomCode, dto.TargetPlayerId, newLives,
+                    roomScores.TryGetValue(dto.TargetPlayerId, out var targetScore) ? targetScore : 0,
+                    newLives > 0);
+                await _rooms.UpdatePlayerStatsAsync(roomCode, updated.ShooterId,
+                    roomLives.TryGetValue(updated.ShooterId, out var shooterLives) ? shooterLives : 0,
+                    shooterScore, true);
+
                 // Notify clients via SignalR
                 await Clients.Group(roomCode).SendAsync("bulletDespawned", dto.BulletId, "hit");
                 // Publish via MQTT and record history
@@ -108,7 +129,8 @@ public partial class GameHub : Hub
                     updated.ShooterId,
                     1,
                     newLives,
-                    newLives > 0
+                    newLives > 0,
+                    shooterScore
                 );
                 await Clients.Group(roomCode).SendAsync("playerHit", playerHit);
                 try

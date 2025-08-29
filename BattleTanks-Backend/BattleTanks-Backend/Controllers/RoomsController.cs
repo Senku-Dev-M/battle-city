@@ -49,7 +49,8 @@ public class RoomsController : ControllerBase
                         p.Position.Y,
                         p.Rotation,
                         p.Health,
-                        p.IsAlive))
+                        p.IsAlive,
+                        p.SessionScore))
                   .ToList();
 
             return new RoomStateDto(
@@ -86,7 +87,7 @@ public class RoomsController : ControllerBase
                 room.RoomId,
                 room.RoomCode,
                 room.Status,
-                snap.Players.Values.ToList()
+                  snap.Players.Values.ToList()
             );
         }
 
