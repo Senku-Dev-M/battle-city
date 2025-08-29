@@ -14,28 +14,41 @@
 
     @if (joined()) {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 relative">
-        @if (!myAlive()) {
-          <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-red-300 rounded-md px-4 py-8 space-y-3">
-            <h2 class="text-lg">¡Has perdido!</h2>
-            <p class="text-xs">Te quedaste sin vidas.</p>
-            <a routerLink="/lobby" class="pixel-btn text-xs">Volver al lobby</a>
-          </div>
-        }
-        <div class="lg:col-span-2 relative">
-          @if (myHealth() !== null) {
-            <div class="absolute top-0 right-0 mt-1 mr-2 text-xs text-yellow-300 font-mono select-none">
-              Vidas: {{ myHealth() }}
+          @if (!myAlive()) {
+            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-red-300 rounded-md px-4 py-8 space-y-3">
+              <h2 class="text-lg">¡Has perdido!</h2>
+              <p class="text-xs">Te quedaste sin vidas.</p>
+              <a routerLink="/lobby" class="pixel-btn text-xs">Volver al lobby</a>
             </div>
           }
-          <app-room-canvas />
+          <div class="lg:col-span-2 relative">
+            @if (myLives() !== null) {
+              <div class="absolute top-0 right-0 mt-1 mr-2 text-xs text-yellow-300 font-mono select-none">
+                Vidas: {{ myLives() }} · Puntos: {{ myScore() }}
+              </div>
+            }
+            <app-room-canvas />
+          </div>
+          <div>
+            <div class="mb-4 text-xs text-yellow-300">
+              <h2 class="font-bold mb-1">Jugadores</h2>
+              <ul class="space-y-1">
+                @for (p of players(); track p.playerId) {
+                  <li>
+                    {{ p.username }} - Vidas: {{ p.lives }} - Puntos: {{ p.score }}
+                    @if (!p.isAlive) {
+                      <span class="text-red-400 ml-1">Game Over</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+            <app-chat-panel />
+          </div>
         </div>
-        <div>
-          <app-chat-panel />
-        </div>
-      </div>
-    } @else {
-      <div class="text-blue-300 text-sm">Conectando a la sala...</div>
-    }
+      } @else {
+        <div class="text-blue-300 text-sm">Conectando a la sala...</div>
+      }
 
     <div class="scanline"></div>
   </div>

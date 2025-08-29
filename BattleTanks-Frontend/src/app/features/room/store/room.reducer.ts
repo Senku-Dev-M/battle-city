@@ -60,15 +60,16 @@ export const roomReducer = createReducer(
   // Player events
   on(roomActions.playerJoined, (s, { userId, username }) => {
     const existing = s.players.entities[userId];
-    const upsert: PlayerStateDto = {
-      playerId: userId,
-      username: username ?? existing?.username ?? 'Unknown',
-      x: existing?.x ?? 0,
-      y: existing?.y ?? 0,
-      rotation: existing?.rotation ?? 0,
-      health: existing?.health ?? 5,
-      isAlive: existing?.isAlive ?? true,
-    };
+      const upsert: PlayerStateDto = {
+        playerId: userId,
+        username: username ?? existing?.username ?? 'Unknown',
+        x: existing?.x ?? 0,
+        y: existing?.y ?? 0,
+        rotation: existing?.rotation ?? 0,
+        lives: existing?.lives ?? 3,
+        isAlive: existing?.isAlive ?? true,
+        score: existing?.score ?? 0,
+      };
     return { ...s, players: playersAdapter.upsertOne(upsert, s.players) };
   }),
 
@@ -81,15 +82,16 @@ export const roomReducer = createReducer(
     const incomingId = (player as any).playerId;
     const existing = s.players.entities[incomingId];
 
-    const merged: PlayerStateDto = {
-      playerId: incomingId,
-      username: (player as any).username ?? existing?.username ?? 'Unknown',
-      x: (player as any).x,
-      y: (player as any).y,
-      rotation: (player as any).rotation,
-      health: (player as any).health ?? existing?.health ?? 5,
-      isAlive: (player as any).isAlive ?? existing?.isAlive ?? true,
-    };
+      const merged: PlayerStateDto = {
+        playerId: incomingId,
+        username: (player as any).username ?? existing?.username ?? 'Unknown',
+        x: (player as any).x,
+        y: (player as any).y,
+        rotation: (player as any).rotation,
+        lives: (player as any).lives ?? existing?.lives ?? 3,
+        isAlive: (player as any).isAlive ?? existing?.isAlive ?? true,
+        score: (player as any).score ?? existing?.score ?? 0,
+      };
     return { ...s, players: playersAdapter.upsertOne(merged, s.players) };
   }),
 
@@ -97,22 +99,34 @@ export const roomReducer = createReducer(
     const playerId = dto.targetPlayerId;
     const existing = s.players.entities[playerId];
     if (!existing) return s;
-    const updated: PlayerStateDto = {
-      ...existing,
-      health: dto.targetHealthAfter,
-      isAlive: dto.targetIsAlive,
-    };
-    return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
+      let playersState = s.players;
+      const updatedTarget: PlayerStateDto = {
+        ...existing,
+        lives: dto.targetLivesAfter,
+        isAlive: dto.targetIsAlive,
+        score: existing.score,
+      };
+      playersState = playersAdapter.upsertOne(updatedTarget, playersState);
+
+      const shooter = s.players.entities[dto.shooterId];
+      if (shooter) {
+        const updatedShooter: PlayerStateDto = {
+          ...shooter,
+          score: dto.shooterScoreAfter,
+        };
+        playersState = playersAdapter.upsertOne(updatedShooter, playersState);
+      }
+      return { ...s, players: playersState };
   }),
 
   on(roomActions.playerDied, (s, { playerId }) => {
     const existing = s.players.entities[playerId];
     if (!existing) return s;
-    const updated: PlayerStateDto = {
-      ...existing,
-      health: 0,
-      isAlive: false,
-    };
+      const updated: PlayerStateDto = {
+        ...existing,
+        lives: 0,
+        isAlive: false,
+      };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
 

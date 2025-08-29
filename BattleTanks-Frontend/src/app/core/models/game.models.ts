@@ -4,8 +4,9 @@ export interface PlayerStateDto {
   x: number;
   y: number;
   rotation: number;
-  health: number;
+  lives: number;
   isAlive: boolean;
+  score: number;
 }
 
 export interface PlayerPositionDto {
@@ -52,6 +53,7 @@ export interface PlayerHitDto {
   targetPlayerId: string;
   shooterId: string;
   damage: number;
-  targetHealthAfter: number;
+  targetLivesAfter: number;
   targetIsAlive: boolean;
+  shooterScoreAfter: number;
 }

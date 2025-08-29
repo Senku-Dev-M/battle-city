@@ -32,6 +32,9 @@ public interface IRoomRegistry
     // Get players in a room
     Task<IReadOnlyCollection<PlayerStateDto>> GetPlayersByIdAsync(string roomId);
 
+    // Update a player's lives/score
+    Task UpdatePlayerStatsAsync(string roomCode, string playerId, int lives, int score, bool isAlive);
+
     // Get map snapshot
     Task<MapCellDto[]> GetMapAsync(string roomId);
 

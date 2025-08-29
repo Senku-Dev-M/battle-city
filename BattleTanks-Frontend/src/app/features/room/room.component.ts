@@ -49,19 +49,24 @@ export class RoomComponent implements OnInit, OnDestroy {
   /**
    * Returns the number of remaining lives for the current player or null if not in a room.
    */
-  myHealth = computed(() => {
-    const p = this.myPlayer();
-    return p ? p.health : null;
-  });
+    myLives = computed(() => {
+      const p = this.myPlayer();
+      return p ? p.lives : null;
+    });
+
+    myScore = computed(() => {
+      const p = this.myPlayer();
+      return p ? p.score : 0;
+    });
 
   /**
    * Indicates whether the current player is still alive.  Defaults to true (so that UI does not show
    * an overlay before joining).
    */
-  myAlive = computed(() => {
-    const p = this.myPlayer();
-    return p ? p.isAlive : true;
-  });
+    myAlive = computed(() => {
+      const p = this.myPlayer();
+      return p ? p.isAlive : true;
+    });
 
   private roomCode = signal<string | null>(null);
 

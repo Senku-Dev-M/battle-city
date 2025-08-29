@@ -58,7 +58,11 @@ public partial class GameHub : Hub
 
         if (!_playerLivesByRoom.ContainsKey(roomCode))
             _playerLivesByRoom[roomCode] = new();
-        _playerLivesByRoom[roomCode][userId] = 5;
+        _playerLivesByRoom[roomCode][userId] = 3;
+
+        if (!_playerScoresByRoom.ContainsKey(roomCode))
+            _playerScoresByRoom[roomCode] = new();
+        _playerScoresByRoom[roomCode][userId] = 0;
 
         await Clients.Group(roomCode).SendAsync("playerJoined", new { userId, username = uname });
         // Publish join event via MQTT and record in history
@@ -95,7 +99,8 @@ public partial class GameHub : Hub
             x = spawnX,
             y = spawnY,
             rotation = 0f,
-            health = 5,
+            lives = 3,
+            score = 0,
             isAlive = true
         };
         await Clients.Group(roomCode).SendAsync("playerMoved", initialState);
@@ -131,6 +136,10 @@ public partial class GameHub : Hub
             if (_playerLivesByRoom.TryGetValue(left.roomCode!, out var roomLives))
             {
                 roomLives.TryRemove(left.userId!, out _);
+            }
+            if (_playerScoresByRoom.TryGetValue(left.roomCode!, out var roomScores))
+            {
+                roomScores.TryRemove(left.userId!, out _);
             }
 
             await Clients.Group(left.roomCode!).SendAsync("playerLeft", left.userId!);
