@@ -1,0 +1,42 @@
+{
+  "id": null,
+  "title": "Battle Tanks Performance",
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "SignalR Latency",
+      "targets": [
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"signalr\" and r._field == \"latency\")",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "MQTT Throughput",
+      "targets": [
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"mqtt\" and r._field == \"messages\")",
+          "refId": "B"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "REST HTTP Errors",
+      "targets": [
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"http\" and r._field == \"errors\") |> last()",
+          "refId": "C"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 4 }
+    }
+  ]
+}
