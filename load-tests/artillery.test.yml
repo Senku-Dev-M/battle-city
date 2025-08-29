@@ -1,0 +1,15 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 20
+  plugins:
+    influxdb:
+      protocol: http
+      host: localhost
+      port: 8086
+      database: artillery
+scenarios:
+  - flow:
+      - get:
+          url: "/api/health"
