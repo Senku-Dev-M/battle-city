@@ -81,8 +81,7 @@ services:
     networks:
       - battletanks-network
 
-  # MQTT broker with web management UI. EMQX is used as it provides both MQTT and WebSocket
-  # listeners out of the box as well as a dashboard to observe topics and messages.
+  # MQTT broker with web management UI
   mqtt:
     image: emqx/emqx:5.5.0
     container_name: battletanks-mqtt
@@ -147,6 +146,6 @@ volumes:
   grafana_data:
     driver: local
 
-  networks:
-    battletanks-network:
-      driver: bridge
+networks:
+  battletanks-network:
+    driver: bridge
