@@ -1,0 +1,41 @@
+{
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "title": "SignalR Latency por Cliente",
+      "type": "timeseries",
+      "targets": [
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"signalr\") |> filter(fn: (r) => r._field == \"latency\")",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "title": "Promedio de Latencia (ms)",
+      "type": "stat",
+      "targets": [
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"signalr\" and r._field == \"latency\") |> mean()",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "title": "Latencia p95 y p99",
+      "type": "timeseries",
+      "targets": [
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"signalr\" and r._field == \"latency\") |> quantile(q:0.95, method:\"estimate_tdigest\")",
+          "format": "time_series"
+        },
+        {
+          "query": "from(bucket: \"k6\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"signalr\" and r._field == \"latency\") |> quantile(q:0.99, method:\"estimate_tdigest\")",
+          "format": "time_series"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "title": "BattleTanks SignalR Performance"
+}
