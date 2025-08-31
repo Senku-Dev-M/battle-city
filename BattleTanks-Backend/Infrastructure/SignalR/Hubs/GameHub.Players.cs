@@ -101,7 +101,9 @@ public partial class GameHub : Hub
             rotation = 0f,
             lives = 3,
             score = 0,
-            isAlive = true
+            isAlive = true,
+            hasShield = false,
+            speed = 200f
         };
         await Clients.Group(roomCode).SendAsync("playerMoved", initialState);
         // Broadcast initial spawn over MQTT and record history

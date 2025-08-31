@@ -9,6 +9,7 @@ import {
   BulletStateDto,
   BulletHitReportDto,
   PlayerHitDto,
+  PowerUpDto,
 } from '../models/game.models';
 
 @Injectable({ providedIn: 'root' })
@@ -27,6 +28,9 @@ export class SignalRService {
   readonly disconnected$ = new Subject<void>();
   readonly mapState$ = new Subject<any[]>();
   readonly cellDestroyed$ = new Subject<any>();
+  readonly powerUpSpawned$ = new Subject<PowerUpDto>();
+  readonly powerUpRemoved$ = new Subject<string>();
+  readonly powerUpState$ = new Subject<PowerUpDto[]>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -92,6 +96,21 @@ export class SignalRService {
     this.hub.on('cellDestroyed', (cell: any) => {
       console.log('[SignalR] cellDestroyed:', cell);
       this.cellDestroyed$.next(cell);
+    });
+
+    this.hub.on('powerUpSpawned', (p: PowerUpDto) => {
+      console.log('[SignalR] powerUpSpawned:', p);
+      this.powerUpSpawned$.next(p);
+    });
+
+    this.hub.on('powerUpRemoved', (id: string) => {
+      console.log('[SignalR] powerUpRemoved:', id);
+      this.powerUpRemoved$.next(id);
+    });
+
+    this.hub.on('powerUpState', (list: PowerUpDto[]) => {
+      console.log('[SignalR] powerUpState:', list);
+      this.powerUpState$.next(list);
     });
 
     this.hub.on('eventHistory', (history: any) => {
@@ -216,5 +235,17 @@ export class SignalRService {
     if (!this.hub) throw new Error('Hub not connected');
     console.log('[SignalR] destroyCell:', { x, y });
     await this.hub.invoke('DestroyCell', x, y);
+  }
+
+  async getPowerUps(): Promise<void> {
+    if (!this.hub) throw new Error('Hub not connected');
+    console.log('[SignalR] getPowerUps');
+    await this.hub.invoke('GetPowerUps');
+  }
+
+  async collectPowerUp(id: string): Promise<void> {
+    if (!this.hub) throw new Error('Hub not connected');
+    console.log('[SignalR] collectPowerUp:', id);
+    await this.hub.invoke('CollectPowerUp', id);
   }
 }

@@ -50,7 +50,9 @@ public class RoomsController : ControllerBase
                         p.Rotation,
                         p.Health,
                         p.IsAlive,
-                        p.SessionScore))
+                        p.SessionScore,
+                        false,
+                        200))
                   .ToList();
 
             return new RoomStateDto(

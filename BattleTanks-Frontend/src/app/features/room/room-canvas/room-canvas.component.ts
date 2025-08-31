@@ -17,7 +17,7 @@ import { selectBullets, selectPlayers } from '../store/room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { roomActions } from '../store/room.actions';
 import { SignalRService } from '../../../core/services/signalr.service';
-import { BulletHitReportDto } from '../../../core/models/game.models';
+import { BulletHitReportDto, PowerUpDto } from '../../../core/models/game.models';
 import { Subscription } from 'rxjs';
 import { effect } from '@angular/core';
 
@@ -38,6 +38,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   players = toSignal(this.store.select(selectPlayers), { initialValue: [] });
   bullets = toSignal(this.store.select(selectBullets), { initialValue: [] });
   me      = toSignal(this.store.select(selectUser), { initialValue: null });
+  powerUps: PowerUpDto[] = [];
 
   /**
    * Determine if the current player still has lives left. Returns true if there is no user (before joining)
@@ -120,6 +121,16 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
         }
       })
     );
+
+    this.subs.push(this.signalR.powerUpState$.subscribe(list => {
+      this.powerUps = list || [];
+    }));
+    this.subs.push(this.signalR.powerUpSpawned$.subscribe(p => {
+      this.powerUps.push(p);
+    }));
+    this.subs.push(this.signalR.powerUpRemoved$.subscribe(id => {
+      this.powerUps = this.powerUps.filter(p => p.powerUpId !== id);
+    }));
   }
 
   /**
@@ -162,6 +173,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     this.resizeCanvas(true);
     this.running = true;
     this.signalR.getMap().catch(() => {});
+    this.signalR.getPowerUps().catch(() => {});
     requestAnimationFrame(this.loop);
   }
 
@@ -222,7 +234,10 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     const dt = (ts - (this.lastTs || ts)) / 1000;
     this.lastTs = ts;
 
-    const speed = 200;
+    const me = this.me();
+    const roster = this.players();
+    const mePlayer = me ? roster.find(p => p.playerId === me.id || (p.username?.toLowerCase() ?? '') === (me.username?.toLowerCase() ?? '')) : null;
+    const speed = mePlayer?.speed ?? 200;
     let dx = 0, dy = 0;
     if (this.pressed.has('w') || this.pressed.has('arrowup')) dy -= 1;
     if (this.pressed.has('s') || this.pressed.has('arrowdown')) dy += 1;
@@ -363,6 +378,14 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
 
+    // Draw power-ups
+    this.powerUps.forEach(p => {
+      ctx.fillStyle = p.type === 'shield' ? '#fde047' : '#4ade80';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
     // Bullets in bright cyan. Each bullet's position is derived from its
     // spawn position, direction and speed, along with the time since spawn.
     ctx.fillStyle = '#22d3ee';
@@ -433,6 +456,15 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
         }
       });
     });
+
+    // Check power-up collisions
+    for (const p of [...this.powerUps]) {
+      const dist = Math.hypot(this.px() - p.x, this.py() - p.y);
+      if (dist < 20) {
+        this.signalR.collectPowerUp(p.powerUpId).catch(() => {});
+        this.powerUps = this.powerUps.filter(x => x.powerUpId !== p.powerUpId);
+      }
+    }
 
     const myId   = this.me()?.id ?? null;
     const myName = this.me()?.username?.toLowerCase() ?? null;

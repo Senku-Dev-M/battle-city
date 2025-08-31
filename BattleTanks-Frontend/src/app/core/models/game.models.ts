@@ -7,6 +7,8 @@ export interface PlayerStateDto {
   lives: number;
   isAlive: boolean;
   score: number;
+  hasShield: boolean;
+  speed: number;
 }
 
 export interface PlayerPositionDto {
@@ -56,4 +58,11 @@ export interface PlayerHitDto {
   targetLivesAfter: number;
   targetIsAlive: boolean;
   shooterScoreAfter: number;
+}
+
+export interface PowerUpDto {
+  powerUpId: string;
+  type: string;
+  x: number;
+  y: number;
 }
