@@ -473,6 +473,25 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     this.players().forEach(p => {
       const isMe = (p.playerId === myId) || (!!myName && p.username?.toLowerCase() === myName);
 
+      // Animated edge when power-ups are active
+      if (p.hasShield || p.speed > 200) {
+        const pulse = (Math.sin(ts / 200) + 1) / 2; // 0..1 pulsing value
+        const baseRadius = 16 + pulse * 2;
+        ctx.lineWidth = 2 + pulse;
+        if (p.hasShield) {
+          ctx.strokeStyle = '#fde047';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, baseRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        if (p.speed > 200) {
+          ctx.strokeStyle = '#4ade80';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, baseRadius + (p.hasShield ? 4 : 0), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rotation || 0);
