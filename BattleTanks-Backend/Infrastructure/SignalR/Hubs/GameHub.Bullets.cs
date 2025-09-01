@@ -93,6 +93,17 @@ public partial class GameHub : Hub
         var updated = bullet with { IsActive = false };
         roomBullets[dto.BulletId] = updated;
 
+        var targetState = await _rooms.GetPlayerStateAsync(roomCode, dto.TargetPlayerId);
+        if (targetState?.HasShield == true)
+        {
+            await _rooms.SetPlayerPowerUpAsync(roomCode, dto.TargetPlayerId, hasShield: false);
+            roomBullets.TryRemove(dto.BulletId, out _);
+            await Clients.Group(roomCode).SendAsync("bulletDespawned", dto.BulletId, "shield");
+            var newState = targetState with { HasShield = false };
+            await Clients.Group(roomCode).SendAsync("playerMoved", newState);
+            return;
+        }
+
         if (_playerLivesByRoom.TryGetValue(roomCode, out var roomLives))
         {
             if (roomLives.TryGetValue(dto.TargetPlayerId, out var lives))

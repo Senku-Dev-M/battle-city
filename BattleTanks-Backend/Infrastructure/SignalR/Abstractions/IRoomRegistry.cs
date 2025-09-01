@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using System;
 
 namespace Infrastructure.SignalR.Abstractions;
 
@@ -43,4 +44,13 @@ public interface IRoomRegistry
 
     // Allocate spawn position
     Task<(int X, int Y)> AllocateSpawnAsync(string roomId, string userId);
+
+    // Power-ups
+    IEnumerable<(string RoomId, string RoomCode)> ListRooms();
+    Task<IReadOnlyCollection<PowerUpDto>> GetPowerUpsAsync(string roomId);
+    Task<PowerUpDto?> RemovePowerUpAsync(string roomId, string powerUpId);
+    Task<PowerUpDto?> SpawnPowerUpAsync(string roomId);
+    Task<IReadOnlyList<string>> RemoveExpiredPowerUpsAsync(string roomId, TimeSpan lifetime);
+    Task<PlayerStateDto?> GetPlayerStateAsync(string roomCode, string playerId);
+    Task SetPlayerPowerUpAsync(string roomCode, string playerId, bool? hasShield = null, float? speed = null);
 }

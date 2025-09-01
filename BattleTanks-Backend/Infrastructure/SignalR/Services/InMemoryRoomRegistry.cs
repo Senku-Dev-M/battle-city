@@ -3,7 +3,9 @@ using Application.DTOs;
 using Application.Interfaces;
 using Domain.Enums;
 using Infrastructure.SignalR.Abstractions;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Infrastructure.SignalR.Hubs;
 
 namespace Infrastructure.SignalR.Services;
 
@@ -21,16 +23,21 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
         public ConcurrentDictionary<(int X, int Y), MapCellDto> MapCells { get; } = new();
         public List<(int X, int Y)> SpawnPoints { get; } = new();
         public int NextSpawnIndex { get; set; } = 0;
+        public ConcurrentDictionary<string, (PowerUpDto dto, DateTime spawned)> PowerUps { get; } = new();
     }
 
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHubContext<GameHub> _hub;
+    private readonly Random _rand = new();
     private readonly ConcurrentDictionary<string, Room> _byId = new();
     private readonly ConcurrentDictionary<string, string> _codeToId = new();
     private readonly ConcurrentDictionary<string, (string roomCode, string userId)> _connIndex = new();
 
-    public InMemoryRoomRegistry(IServiceScopeFactory scopeFactory)
+    public InMemoryRoomRegistry(IServiceScopeFactory scopeFactory, IHubContext<GameHub> hub)
     {
         _scopeFactory = scopeFactory;
+        _hub = hub;
+        _ = RunPowerUpLoop();
     }
 
     // Create or update room and initialize map if needed
@@ -85,8 +92,8 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
     public async Task JoinAsync(string roomCode, string userId, string username, string connectionId)
     {
         var room = await EnsureRoomByCodeAsync(roomCode);
-          var state = new PlayerStateDto(userId, username, 0, 0, 0, 3, true, 0);
-          room.Players[userId] = state;
+        var state = new PlayerStateDto(userId, username, 0, 0, 0, 3, true, 0, false, 200);
+        room.Players[userId] = state;
         _connIndex[connectionId] = (roomCode, userId);
     }
 
@@ -254,5 +261,112 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
             return Task.FromResult(coord);
         }
         return Task.FromResult((0, 0));
+    }
+
+    public IEnumerable<(string RoomId, string RoomCode)> ListRooms() =>
+        _byId.Values.Select(r => (r.RoomId, r.RoomCode));
+
+    public Task<IReadOnlyCollection<PowerUpDto>> GetPowerUpsAsync(string roomId)
+    {
+        if (_byId.TryGetValue(roomId, out var room))
+            return Task.FromResult<IReadOnlyCollection<PowerUpDto>>(room.PowerUps.Values.Select(p => p.dto).ToArray());
+        return Task.FromResult<IReadOnlyCollection<PowerUpDto>>(Array.Empty<PowerUpDto>());
+    }
+
+    public Task<PowerUpDto?> RemovePowerUpAsync(string roomId, string powerUpId)
+    {
+        if (_byId.TryGetValue(roomId, out var room) && room.PowerUps.TryRemove(powerUpId, out var state))
+            return Task.FromResult<PowerUpDto?>(state.dto);
+        return Task.FromResult<PowerUpDto?>(null);
+    }
+
+    public Task<PowerUpDto?> SpawnPowerUpAsync(string roomId)
+    {
+        if (!_byId.TryGetValue(roomId, out var room))
+            return Task.FromResult<PowerUpDto?>(null);
+
+        for (int attempt = 0; attempt < 30; attempt++)
+        {
+            int cx = _rand.Next(0, 20);
+            int cy = _rand.Next(0, 20);
+            if (room.MapCells.TryGetValue((cx, cy), out var cell) && cell.Type == 0)
+            {
+                var type = _rand.Next(0, 2) == 0 ? PowerUpType.Shield : PowerUpType.Speed;
+                var id = Guid.NewGuid().ToString();
+                float px = (cx + 0.5f) * 40f;
+                float py = (cy + 0.5f) * 40f;
+                var dto = new PowerUpDto(id, type.ToString().ToLower(), px, py);
+                room.PowerUps[id] = (dto, DateTime.UtcNow);
+                return Task.FromResult<PowerUpDto?>(dto);
+            }
+        }
+        return Task.FromResult<PowerUpDto?>(null);
+    }
+
+    public Task<IReadOnlyList<string>> RemoveExpiredPowerUpsAsync(string roomId, TimeSpan lifetime)
+    {
+        if (!_byId.TryGetValue(roomId, out var room))
+            return Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+        List<string> removed = new();
+        var now = DateTime.UtcNow;
+        foreach (var kv in room.PowerUps.ToArray())
+        {
+            if (now - kv.Value.spawned >= lifetime)
+            {
+                if (room.PowerUps.TryRemove(kv.Key, out _))
+                    removed.Add(kv.Key);
+            }
+        }
+        return Task.FromResult<IReadOnlyList<string>>(removed);
+    }
+
+    public Task<PlayerStateDto?> GetPlayerStateAsync(string roomCode, string playerId)
+    {
+        if (_codeToId.TryGetValue(roomCode, out var roomId) && _byId.TryGetValue(roomId, out var room))
+        {
+            if (room.Players.TryGetValue(playerId, out var state))
+                return Task.FromResult<PlayerStateDto?>(state);
+        }
+        return Task.FromResult<PlayerStateDto?>(null);
+    }
+
+    public Task SetPlayerPowerUpAsync(string roomCode, string playerId, bool? hasShield = null, float? speed = null)
+    {
+        if (_codeToId.TryGetValue(roomCode, out var roomId) && _byId.TryGetValue(roomId, out var room))
+        {
+            if (room.Players.TryGetValue(playerId, out var state))
+            {
+                var updated = state with
+                {
+                    HasShield = hasShield ?? state.HasShield,
+                    Speed = speed ?? state.Speed
+                };
+                room.Players[playerId] = updated;
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task RunPowerUpLoop()
+    {
+        var lifetime = TimeSpan.FromSeconds(10);
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(15));
+            foreach (var room in _byId.Values)
+            {
+                var expired = await RemoveExpiredPowerUpsAsync(room.RoomId, lifetime);
+                foreach (var id in expired)
+                {
+                    await _hub.Clients.Group(room.RoomCode).SendAsync("powerUpRemoved", id);
+                }
+                if (room.PowerUps.Count == 0)
+                {
+                    var spawned = await SpawnPowerUpAsync(room.RoomId);
+                    if (spawned != null)
+                        await _hub.Clients.Group(room.RoomCode).SendAsync("powerUpSpawned", spawned);
+                }
+            }
+        }
     }
 }

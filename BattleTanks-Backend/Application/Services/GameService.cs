@@ -228,7 +228,9 @@ public class GameService : IGameService
             player.Rotation,
             player.Health,
             player.IsAlive,
-            player.SessionScore
+            player.SessionScore,
+            false,
+            200
         );
     }
 }

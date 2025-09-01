@@ -69,6 +69,8 @@ export const roomReducer = createReducer(
         lives: existing?.lives ?? 3,
         isAlive: existing?.isAlive ?? true,
         score: existing?.score ?? 0,
+        hasShield: existing?.hasShield ?? false,
+        speed: existing?.speed ?? 200,
       };
     return { ...s, players: playersAdapter.upsertOne(upsert, s.players) };
   }),
@@ -91,6 +93,8 @@ export const roomReducer = createReducer(
         lives: (player as any).lives ?? existing?.lives ?? 3,
         isAlive: (player as any).isAlive ?? existing?.isAlive ?? true,
         score: (player as any).score ?? existing?.score ?? 0,
+        hasShield: (player as any).hasShield ?? existing?.hasShield ?? false,
+        speed: (player as any).speed ?? existing?.speed ?? 200,
       };
     return { ...s, players: playersAdapter.upsertOne(merged, s.players) };
   }),
@@ -105,6 +109,8 @@ export const roomReducer = createReducer(
         lives: dto.targetLivesAfter,
         isAlive: dto.targetIsAlive,
         score: existing.score,
+        hasShield: existing.hasShield,
+        speed: existing.speed,
       };
       playersState = playersAdapter.upsertOne(updatedTarget, playersState);
 
@@ -126,6 +132,8 @@ export const roomReducer = createReducer(
         ...existing,
         lives: 0,
         isAlive: false,
+        hasShield: existing.hasShield,
+        speed: existing.speed,
       };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
