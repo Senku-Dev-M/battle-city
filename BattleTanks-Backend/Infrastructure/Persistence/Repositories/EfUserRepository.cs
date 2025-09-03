@@ -78,7 +78,7 @@ public class EfUserRepository : IUserRepository
 
     public async Task AddAsync(User user)
     {
-        await _context.Users.AddAsync(user);
+        _context.Users.Add(user);
         await _context.SaveChangesAsync();
     }
 

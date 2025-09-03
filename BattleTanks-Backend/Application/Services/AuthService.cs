@@ -23,14 +23,10 @@ public class AuthService : IAuthService
         if (registerDto.Password != registerDto.ConfirmPassword)
             throw new ArgumentException("Passwords don't match");
 
-        var usernameExistsTask = _userRepository.ExistsByUsernameAsync(registerDto.Username);
-        var emailExistsTask = _userRepository.ExistsByEmailAsync(registerDto.Email);
-        await Task.WhenAll(usernameExistsTask, emailExistsTask);
-
-        if (usernameExistsTask.Result)
+        if (await _userRepository.ExistsByUsernameAsync(registerDto.Username))
             throw new ArgumentException("Username already exists");
 
-        if (emailExistsTask.Result)
+        if (await _userRepository.ExistsByEmailAsync(registerDto.Email))
             throw new ArgumentException("Email already exists");
 
         var passwordHash = await Task.Run(() => BCrypt.Net.BCrypt.HashPassword(registerDto.Password));
