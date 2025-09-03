@@ -36,6 +36,9 @@ public interface IRoomRegistry
     // Update a player's lives/score
     Task UpdatePlayerStatsAsync(string roomCode, string playerId, int lives, int score, bool isAlive);
 
+    // Update ready status
+    Task SetPlayerReadyAsync(string roomCode, string playerId, bool ready);
+
     // Get map snapshot
     Task<MapCellDto[]> GetMapAsync(string roomId);
 

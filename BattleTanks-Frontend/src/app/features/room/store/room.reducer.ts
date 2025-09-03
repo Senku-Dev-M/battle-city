@@ -15,6 +15,7 @@ export interface RoomState {
   bullets: EntityState<BulletEntity>;
   chat: ChatMessageDto[];
   lastUsername: string | null;
+  gameStarted: boolean;
 }
 
 const playersAdapter = createEntityAdapter<PlayerEntity>({
@@ -33,6 +34,7 @@ const initialState: RoomState = {
   bullets: bulletsAdapter.getInitialState(),
   chat: [],
   lastUsername: null,
+  gameStarted: false,
 };
 
 export const roomReducer = createReducer(
@@ -46,7 +48,7 @@ export const roomReducer = createReducer(
 
   // Room lifecycle
   on(roomActions.joinRoom, (s, { code, username }) => ({ ...s, roomCode: code, lastUsername: username, error: null })),
-  on(roomActions.joined, (s) => ({ ...s, joined: true })),
+  on(roomActions.joined, (s) => ({ ...s, joined: true, gameStarted: false })),
   on(roomActions.leaveRoom, (s) => ({ ...s, joined: false })),
   on(roomActions.left, (s) => ({
     ...s,
@@ -55,6 +57,7 @@ export const roomReducer = createReducer(
     players: playersAdapter.removeAll(s.players),
     bullets: bulletsAdapter.removeAll(s.bullets),
     chat: [],
+    gameStarted: false,
   })),
 
   // Player events
@@ -71,6 +74,7 @@ export const roomReducer = createReducer(
         score: existing?.score ?? 0,
         hasShield: existing?.hasShield ?? false,
         speed: existing?.speed ?? 200,
+        isReady: existing?.isReady ?? false,
       };
     return { ...s, players: playersAdapter.upsertOne(upsert, s.players) };
   }),
@@ -95,6 +99,7 @@ export const roomReducer = createReducer(
         score: (player as any).score ?? existing?.score ?? 0,
         hasShield: (player as any).hasShield ?? existing?.hasShield ?? false,
         speed: (player as any).speed ?? existing?.speed ?? 200,
+        isReady: existing?.isReady ?? false,
       };
     return { ...s, players: playersAdapter.upsertOne(merged, s.players) };
   }),
@@ -111,6 +116,7 @@ export const roomReducer = createReducer(
         score: existing.score,
         hasShield: existing.hasShield,
         speed: existing.speed,
+        isReady: existing.isReady,
       };
       playersState = playersAdapter.upsertOne(updatedTarget, playersState);
 
@@ -119,6 +125,7 @@ export const roomReducer = createReducer(
         const updatedShooter: PlayerStateDto = {
           ...shooter,
           score: dto.shooterScoreAfter,
+          isReady: shooter.isReady,
         };
         playersState = playersAdapter.upsertOne(updatedShooter, playersState);
       }
@@ -134,6 +141,7 @@ export const roomReducer = createReducer(
         isAlive: false,
         hasShield: existing.hasShield,
         speed: existing.speed,
+        isReady: existing.isReady,
       };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
@@ -153,6 +161,15 @@ export const roomReducer = createReducer(
     ...s,
     players: playersAdapter.upsertMany(players, s.players),
   })),
+
+  on(roomActions.playerReady, (s, { userId, ready }) => {
+    const existing = s.players.entities[userId];
+    if (!existing) return s;
+    const updated: PlayerStateDto = { ...existing, isReady: ready };
+    return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
+  }),
+
+  on(roomActions.gameStarted, (s) => ({ ...s, gameStarted: true })),
 
   // Chat messages
   on(roomActions.messageReceived, (s, { msg }) => ({

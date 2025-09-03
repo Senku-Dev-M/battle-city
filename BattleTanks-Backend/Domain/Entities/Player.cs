@@ -16,6 +16,7 @@ public class Player
     public int SessionKills { get; private set; }
     public int SessionDeaths { get; private set; }
     public int SessionScore { get; private set; }
+    public bool IsReady { get; private set; }
     
     // Navegación
     public User User { get; private set; }
@@ -37,7 +38,8 @@ public class Player
             Health = 100,
             SessionKills = 0,
             SessionDeaths = 0,
-            SessionScore = 0
+            SessionScore = 0,
+            IsReady = false
         };
     }
     
@@ -45,12 +47,14 @@ public class Player
     {
         GameSessionId = gameSessionId;
         ResetSessionStats();
+        IsReady = false;
     }
     
     public void LeaveGameSession()
     {
         GameSessionId = null;
         ResetSessionStats();
+        IsReady = false;
     }
     
     public void UpdatePosition(Position newPosition, float rotation)
@@ -95,6 +99,12 @@ public class Player
         SessionKills = 0;
         SessionDeaths = 0;
         SessionScore = 0;
+        IsReady = false;
+    }
+
+    public void SetReady(bool ready)
+    {
+        IsReady = ready;
     }
     
     // Propiedades de conveniencia

@@ -230,7 +230,8 @@ public class GameService : IGameService
             player.IsAlive,
             player.SessionScore,
             false,
-            200
+            200,
+            player.IsReady
         );
     }
 }

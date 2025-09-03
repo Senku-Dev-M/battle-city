@@ -46,6 +46,8 @@ events$ = createEffect(() =>
         this.hub.bulletDespawned$.pipe(map(({ bulletId }) => roomActions.bulletDespawned({ bulletId }))),
         this.hub.playerHit$.pipe(map((dto) => roomActions.playerHit({ dto }))),
         this.hub.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId }))),
+        this.hub.playerReady$.pipe(map((p) => roomActions.playerReady(p))),
+        this.hub.gameStarted$.pipe(map(() => roomActions.gameStarted())),
         // MQTT events
         this.mqtt.playerJoined$.pipe(map((p) => roomActions.playerJoined(p))),
         this.mqtt.playerLeft$.pipe(map((userId) => roomActions.playerLeft({ userId }))),
@@ -140,6 +142,15 @@ events$ = createEffect(() =>
       this.actions$.pipe(
         ofType(roomActions.spawnBullet),
         mergeMap(({ x, y, dir, speed }) => from(this.hub.spawnBullet(x, y, dir, speed)).pipe(catchError(() => of(void 0))))
+      ),
+    { dispatch: false }
+  );
+
+  setReady$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(roomActions.setReady),
+        mergeMap(({ ready }) => from(this.hub.setReady(ready)).pipe(catchError(() => of(void 0))))
       ),
     { dispatch: false }
   );

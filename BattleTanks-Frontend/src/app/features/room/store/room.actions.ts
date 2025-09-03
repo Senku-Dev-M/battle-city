@@ -35,10 +35,13 @@ export const roomActions = createActionGroup({
     'Player Hit': props<{ dto: PlayerHitDto }>(),
     'Player Died': props<{ playerId: string }>(),
     'Message Received': props<{ msg: ChatMessageDto }>(),
+    'Player Ready': props<{ userId: string; ready: boolean }>(),
+    'Game Started': emptyProps(),
 
     // Cliente→servidor
     'Send Message': props<{ content: string }>(),
     'Update Position': props<{ dto: PlayerPositionDto }>(),
     'Spawn Bullet': props<{ x: number; y: number; dir: number; speed: number }>(),
+    'Set Ready': props<{ ready: boolean }>(),
   },
 });

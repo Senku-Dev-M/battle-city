@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Linq;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Enums;
@@ -92,6 +93,9 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
     public async Task JoinAsync(string roomCode, string userId, string username, string connectionId)
     {
         var room = await EnsureRoomByCodeAsync(roomCode);
+        if (room.Status != GameRoomStatus.Waiting.ToString())
+            throw new InvalidOperationException("room_already_started");
+
         var state = new PlayerStateDto(userId, username, 0, 0, 0, 3, true, 0, false, 200);
         room.Players[userId] = state;
         _connIndex[connectionId] = (roomCode, userId);
@@ -127,6 +131,27 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
             }
         }
         return Task.CompletedTask;
+    }
+
+    public async Task SetPlayerReadyAsync(string roomCode, string playerId, bool ready)
+    {
+        if (_codeToId.TryGetValue(roomCode, out var roomId) && _byId.TryGetValue(roomId, out var room))
+        {
+            if (room.Players.TryGetValue(playerId, out var state))
+            {
+                room.Players[playerId] = state with { IsReady = ready };
+                await _hub.Clients.Group(room.RoomCode).SendAsync("playerReady", new { userId = playerId, ready });
+
+                if (room.Status == GameRoomStatus.Waiting.ToString() &&
+                    room.Players.Count >= 2 &&
+                    room.Players.Values.All(p => p.IsReady))
+                {
+                    ResetMap(room);
+                    room.Status = GameRoomStatus.InProgress.ToString();
+                    await _hub.Clients.Group(room.RoomCode).SendAsync("gameStarted");
+                }
+            }
+        }
     }
 
     // Ensure room exists and initialize map if missing
@@ -171,6 +196,15 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
             r.Status,
             r.Players
         );
+
+    private static void ResetMap(Room room)
+    {
+        room.MapCells.Clear();
+        room.SpawnPoints.Clear();
+        room.PowerUps.Clear();
+        room.NextSpawnIndex = 0;
+        InitializeMap(room);
+    }
 
     // Initialize default map and spawn points
     private static void InitializeMap(Room room)

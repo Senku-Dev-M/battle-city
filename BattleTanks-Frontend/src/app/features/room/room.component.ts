@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { roomActions } from './store/room.actions';
-import { selectHubConnected, selectJoined, selectRoomError, selectPlayers } from './store/room.selectors';
+import { selectHubConnected, selectJoined, selectRoomError, selectPlayers, selectGameStarted } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
@@ -26,6 +26,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   joined       = toSignal(this.store.select(selectJoined),       { initialValue: false });
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
   user         = toSignal(this.store.select(selectUser),         { initialValue: null });
+  gameStarted  = toSignal(this.store.select(selectGameStarted),  { initialValue: false });
 
   /**
    * Signal containing the list of players in the current room.  Used to derive the current player's
@@ -59,6 +60,11 @@ export class RoomComponent implements OnInit, OnDestroy {
       return p ? p.score : 0;
     });
 
+    myReady = computed(() => {
+      const p = this.myPlayer();
+      return p ? p.isReady : false;
+    });
+
   /**
    * Indicates whether the current player is still alive.  Defaults to true (so that UI does not show
    * an overlay before joining).
@@ -90,5 +96,9 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.store.dispatch(roomActions.leaveRoom());
+  }
+
+  sendReady() {
+    this.store.dispatch(roomActions.setReady({ ready: true }));
   }
 }
