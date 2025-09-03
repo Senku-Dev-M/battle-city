@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using Application.DTOs;
 using Application.Interfaces;
@@ -149,20 +150,11 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
                 {
                     ResetMap(room);
                     room.Status = GameRoomStatus.InProgress.ToString();
-
                     // Persist room status change so HTTP queries reflect it
                     using var scope = _scopeFactory.CreateScope();
                     var sessions = scope.ServiceProvider.GetRequiredService<IGameSessionRepository>();
-                    var session = await sessions.GetByCodeAsync(room.RoomCode);
-                    if (session != null)
-                    {
-                        // Mark players ready so domain StartGame passes validation
-                        foreach (var p in session.Players)
-                            p.SetReady(true);
-
-                        session.StartGame();
-                        await sessions.UpdateAsync(session);
-                    }
+                    if (Guid.TryParse(room.RoomId, out var roomGuid))
+                        await sessions.UpdateStatusAsync(roomGuid, GameRoomStatus.InProgress);
 
                     await _hub.Clients.Group(room.RoomCode).SendAsync("gameStarted");
                 }

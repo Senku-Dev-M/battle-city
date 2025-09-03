@@ -72,6 +72,20 @@ public class EfGameSessionRepository : IGameSessionRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdateStatusAsync(Guid id, GameRoomStatus status)
+    {
+        var session = await _context.GameSessions.FindAsync(id);
+        if (session == null) return;
+
+        _context.Entry(session).Property(s => s.Status).CurrentValue = status;
+        if (status == GameRoomStatus.InProgress)
+            _context.Entry(session).Property(s => s.StartedAt).CurrentValue = DateTime.UtcNow;
+        if (status == GameRoomStatus.Finished)
+            _context.Entry(session).Property(s => s.EndedAt).CurrentValue = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task DeleteAsync(Guid id)
     {
         var session = await _context.GameSessions.FindAsync(id);
