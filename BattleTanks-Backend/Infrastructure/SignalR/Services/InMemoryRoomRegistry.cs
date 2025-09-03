@@ -3,6 +3,7 @@ using System.Linq;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Enums;
+using Domain.Entities;
 using Infrastructure.SignalR.Abstractions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
@@ -148,6 +149,21 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
                 {
                     ResetMap(room);
                     room.Status = GameRoomStatus.InProgress.ToString();
+
+                    // Persist room status change so HTTP queries reflect it
+                    using var scope = _scopeFactory.CreateScope();
+                    var sessions = scope.ServiceProvider.GetRequiredService<IGameSessionRepository>();
+                    var session = await sessions.GetByCodeAsync(room.RoomCode);
+                    if (session != null)
+                    {
+                        // Mark players ready so domain StartGame passes validation
+                        foreach (var p in session.Players)
+                            p.SetReady(true);
+
+                        session.StartGame();
+                        await sessions.UpdateAsync(session);
+                    }
+
                     await _hub.Clients.Group(room.RoomCode).SendAsync("gameStarted");
                 }
             }

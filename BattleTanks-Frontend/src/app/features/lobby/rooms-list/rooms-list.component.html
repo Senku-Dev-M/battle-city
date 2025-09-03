@@ -18,7 +18,13 @@
               Estado: {{ room.status }} · Jugadores: {{ room.players.length }}
             </div>
           </div>
-          <button class="pixel-btn" (click)="enter(room.roomCode)">ENTRAR</button>
+          <button
+            class="pixel-btn"
+            (click)="enter(room.roomCode)"
+            [disabled]="room.status !== 'Waiting'"
+          >
+            {{ room.status === 'Waiting' ? 'ENTRAR' : 'EN CURSO' }}
+          </button>
         </div>
       }
     </div>
