@@ -17,9 +17,9 @@ import { selectBullets, selectPlayers } from '../store/room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { roomActions } from '../store/room.actions';
 import { SignalRService } from '../../../core/services/signalr.service';
-import { BulletHitReportDto, PowerUpDto } from '../../../core/models/game.models';
-import { Subscription } from 'rxjs';
+import { BulletHitReportDto } from '../../../core/models/game.models';
 import { effect } from '@angular/core';
+import { GameRoomService } from '../game-room.service';
 
 @Component({
   standalone: true,
@@ -38,7 +38,9 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   players = toSignal(this.store.select(selectPlayers), { initialValue: [] });
   bullets = toSignal(this.store.select(selectBullets), { initialValue: [] });
   me      = toSignal(this.store.select(selectUser), { initialValue: null });
-  powerUps: PowerUpDto[] = [];
+
+  private gameRoom = inject(GameRoomService);
+  get map() { return this.gameRoom.map(); }
 
   /**
    * Determine if the current player still has lives left. Returns true if there is no user (before joining)
@@ -93,47 +95,6 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   private signalR = inject(SignalRService);
 
   /**
-   * The map used for rendering obstacles. It is populated from the server
-   * and updated when cells are destroyed.
-   */
-  private map = { width: 0, height: 0, cells: [] as number[][] };
-  private subs: Subscription[] = [];
-
-  constructor() {
-    this.subs.push(
-      this.signalR.mapState$.subscribe((cells: any[]) => {
-        if (!cells || cells.length === 0) return;
-        const width = Math.max(...cells.map(c => c.x)) + 1;
-        const height = Math.max(...cells.map(c => c.y)) + 1;
-        const grid = Array.from({ length: height }, () => Array(width).fill(0));
-        for (const cell of cells) {
-          const val = cell.isDestroyed ? 0 : cell.type;
-          grid[cell.y][cell.x] = val;
-        }
-        this.map = { width, height, cells: grid };
-      })
-    );
-
-    this.subs.push(
-      this.signalR.cellDestroyed$.subscribe((cell: any) => {
-        if (this.map.cells[cell.y]) {
-          this.map.cells[cell.y][cell.x] = 0;
-        }
-      })
-    );
-
-    this.subs.push(this.signalR.powerUpState$.subscribe(list => {
-      this.powerUps = list || [];
-    }));
-    this.subs.push(this.signalR.powerUpSpawned$.subscribe(p => {
-      this.powerUps.push(p);
-    }));
-    this.subs.push(this.signalR.powerUpRemoved$.subscribe(id => {
-      this.powerUps = this.powerUps.filter(p => p.powerUpId !== id);
-    }));
-  }
-
-  /**
    * Indicates whether the initial spawn position for the current player has been applied.  When
    * a player joins a room, the server broadcasts a playerMoved message with the assigned spawn
    * coordinates.  This effect watches for the player state in the store and, if the local
@@ -172,14 +133,12 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     this.ctx = canvas.getContext('2d');
     this.resizeCanvas(true);
     this.running = true;
-    this.signalR.getMap().catch(() => {});
-    this.signalR.getPowerUps().catch(() => {});
+    this.gameRoom.loadInitialState();
     requestAnimationFrame(this.loop);
   }
 
   ngOnDestroy(): void {
     this.running = false;
-    this.subs.forEach(s => s.unsubscribe());
   }
 
   @HostListener('window:resize') onWindowResize() {
@@ -379,7 +338,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     }
 
     // Draw power-ups
-    this.powerUps.forEach(p => {
+    this.gameRoom.powerUps().forEach(p => {
       ctx.fillStyle = p.type === 'shield' ? '#fde047' : '#4ade80';
       ctx.beginPath();
       ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
@@ -458,11 +417,11 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     });
 
     // Check power-up collisions
-    for (const p of [...this.powerUps]) {
+    for (const p of [...this.gameRoom.powerUps()]) {
       const dist = Math.hypot(this.px() - p.x, this.py() - p.y);
       if (dist < 20) {
         this.signalR.collectPowerUp(p.powerUpId).catch(() => {});
-        this.powerUps = this.powerUps.filter(x => x.powerUpId !== p.powerUpId);
+        this.gameRoom.powerUps.update(list => list.filter(x => x.powerUpId !== p.powerUpId));
       }
     }
 
