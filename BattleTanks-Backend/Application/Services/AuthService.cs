@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using BCrypt.Net;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Hosting;
 
 namespace Application.Services;
 
@@ -10,11 +11,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IMemoryCache _cache;
+    private readonly IHostEnvironment _env;
 
-    public AuthService(IUserRepository userRepository, IMemoryCache cache)
+    public AuthService(IUserRepository userRepository, IMemoryCache cache, IHostEnvironment env)
     {
         _userRepository = userRepository;
         _cache = cache;
+        _env = env;
     }
 
     // Register new user
@@ -31,7 +34,8 @@ public class AuthService : IAuthService
             if (existing.Email == registerDto.Email.ToLowerInvariant())
                 throw new ArgumentException("Email already exists");
         }
-        var passwordHash = await Task.Run(() => BCrypt.Net.BCrypt.EnhancedHashPassword(registerDto.Password, workFactor: 11));
+        var workFactor = _env.IsProduction() ? 11 : 10;
+        var passwordHash = await Task.Run(() => BCrypt.Net.BCrypt.EnhancedHashPassword(registerDto.Password, workFactor: workFactor));
         var user = User.Create(registerDto.Username, registerDto.Email, passwordHash);
 
         await _userRepository.AddAsync(user);
@@ -60,8 +64,12 @@ public class AuthService : IAuthService
         if (!validPassword)
             throw new UnauthorizedAccessException("Invalid credentials");
 
-        user.UpdateLastLogin();
-        await _userRepository.UpdateLastLoginAsync(user.Id);
+        var now = DateTime.UtcNow;
+        if (now - user.LastLoginAt >= TimeSpan.FromMinutes(5))
+        {
+            user.UpdateLastLogin();
+            await _userRepository.UpdateLastLoginAsync(user.Id);
+        }
         _cache.Set(cacheKey, user, TimeSpan.FromMinutes(5));
 
         return user;
