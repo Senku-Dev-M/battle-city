@@ -23,13 +23,15 @@ public class AuthService : IAuthService
         if (registerDto.Password != registerDto.ConfirmPassword)
             throw new ArgumentException("Passwords don't match");
 
-        if (await _userRepository.ExistsByUsernameAsync(registerDto.Username))
-            throw new ArgumentException("Username already exists");
-
-        if (await _userRepository.ExistsByEmailAsync(registerDto.Email))
-            throw new ArgumentException("Email already exists");
-
-        var passwordHash = await Task.Run(() => BCrypt.Net.BCrypt.HashPassword(registerDto.Password));
+        var existing = await _userRepository.GetByUsernameOrEmailAsync(registerDto.Username, registerDto.Email);
+        if (existing != null)
+        {
+            if (existing.Username == registerDto.Username)
+                throw new ArgumentException("Username already exists");
+            if (existing.Email == registerDto.Email.ToLowerInvariant())
+                throw new ArgumentException("Email already exists");
+        }
+        var passwordHash = await Task.Run(() => BCrypt.Net.BCrypt.EnhancedHashPassword(registerDto.Password, workFactor: 11));
         var user = User.Create(registerDto.Username, registerDto.Email, passwordHash);
 
         await _userRepository.AddAsync(user);
@@ -54,7 +56,7 @@ public class AuthService : IAuthService
         if (user == null)
             throw new UnauthorizedAccessException("Invalid credentials");
 
-        var validPassword = await Task.Run(() => BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash));
+        var validPassword = await Task.Run(() => BCrypt.Net.BCrypt.EnhancedVerify(loginDto.Password, user.PasswordHash));
         if (!validPassword)
             throw new UnauthorizedAccessException("Invalid credentials");
 

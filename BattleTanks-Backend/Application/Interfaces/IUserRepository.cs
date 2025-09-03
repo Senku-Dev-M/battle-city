@@ -8,9 +8,8 @@ public interface IUserRepository
     Task<User?> GetByUsernameAsync(string username);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByUsernameOrEmailAsync(string usernameOrEmail);
+    Task<User?> GetByUsernameOrEmailAsync(string username, string email);
     Task<List<User>> GetTopPlayersByScoreAsync(int limit = 10);
-    Task<bool> ExistsByUsernameAsync(string username);
-    Task<bool> ExistsByEmailAsync(string email);
     Task UpdateLastLoginAsync(Guid id);
     Task AddAsync(User user);
     Task UpdateAsync(User user);

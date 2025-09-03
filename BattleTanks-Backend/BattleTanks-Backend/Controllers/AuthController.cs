@@ -3,7 +3,9 @@ using Application.Interfaces;
 using Application.DTOs;
 using Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Security.Claims;
+using System;
 
 namespace BattleTanks_Backend.Controllers;
 
@@ -14,15 +16,18 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IJwtService _jwtService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IDistributedCache _cache;
 
     public AuthController(
         IAuthService authService,
         IJwtService jwtService,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IDistributedCache cache)
     {
         _authService = authService;
         _jwtService = jwtService;
         _logger = logger;
+        _cache = cache;
     }
 
     /// <summary>Registrar un nuevo jugador</summary>
@@ -35,6 +40,10 @@ public class AuthController : ControllerBase
             var user = await _authService.RegisterAsync(registerDto);
             var token = _jwtService.GenerateAccessToken(user);
             SetJwtCookie(token); // cookie HttpOnly, Lax, Secure=false (HTTP local)
+            await _cache.SetStringAsync($"session:{token}", user.Id.ToString(), new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+            });
 
             _logger.LogInformation("User {Username} registered successfully", registerDto.Username);
 
@@ -76,6 +85,10 @@ public class AuthController : ControllerBase
             var user = await _authService.LoginAsync(loginDto);
             var token = _jwtService.GenerateAccessToken(user);
             SetJwtCookie(token);
+            await _cache.SetStringAsync($"session:{token}", user.Id.ToString(), new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+            });
 
             _logger.LogInformation("User {Username} logged in successfully", user.Username);
 
@@ -148,6 +161,11 @@ public class AuthController : ControllerBase
                 Secure = false,
                 Path = "/"
             });
+
+            if (Request.Cookies.TryGetValue("jwt", out var token))
+            {
+                _cache.Remove($"session:{token}");
+            }
 
             var username = User.FindFirst(ClaimTypes.Name)?.Value;
             _logger.LogInformation("User {Username} logged out successfully", username);

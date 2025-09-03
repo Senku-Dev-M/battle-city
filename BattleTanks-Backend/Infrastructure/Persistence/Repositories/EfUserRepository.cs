@@ -45,6 +45,14 @@ public class EfUserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Username == usernameOrEmail || u.Email == normalized);
     }
 
+    public async Task<User?> GetByUsernameOrEmailAsync(string username, string email)
+    {
+        var normalized = email.ToLowerInvariant();
+        return await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Username == username || u.Email == normalized);
+    }
+
     public async Task<List<User>> GetTopPlayersByScoreAsync(int limit = 10)
     {
         return await _context.Users
@@ -53,20 +61,6 @@ public class EfUserRepository : IUserRepository
             .ThenByDescending(u => u.GamesWon)
             .Take(limit)
             .ToListAsync();
-    }
-
-    public async Task<bool> ExistsByUsernameAsync(string username)
-    {
-        return await _context.Users
-            .AsNoTracking()
-            .AnyAsync(u => u.Username == username);
-    }
-
-    public async Task<bool> ExistsByEmailAsync(string email)
-    {
-        return await _context.Users
-            .AsNoTracking()
-            .AnyAsync(u => u.Email == email.ToLowerInvariant());
     }
 
     public async Task UpdateLastLoginAsync(Guid id)
