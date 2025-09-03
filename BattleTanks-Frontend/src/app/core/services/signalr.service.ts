@@ -31,6 +31,8 @@ export class SignalRService {
   readonly powerUpSpawned$ = new Subject<PowerUpDto>();
   readonly powerUpRemoved$ = new Subject<string>();
   readonly powerUpState$ = new Subject<PowerUpDto[]>();
+  readonly playerReady$ = new Subject<{ userId: string; ready: boolean }>();
+  readonly gameStarted$ = new Subject<void>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -86,6 +88,16 @@ export class SignalRService {
     this.hub.on('playerDied', (playerId: string) => {
       console.log('[SignalR] playerDied:', playerId);
       this.playerDied$.next(playerId);
+    });
+
+    this.hub.on('playerReady', (payload: { userId: string; ready: boolean }) => {
+      console.log('[SignalR] playerReady:', payload);
+      this.playerReady$.next(payload);
+    });
+
+    this.hub.on('gameStarted', () => {
+      console.log('[SignalR] gameStarted');
+      this.gameStarted$.next();
     });
 
     this.hub.on('mapState', (map: any[]) => {
@@ -247,5 +259,11 @@ export class SignalRService {
     if (!this.hub) throw new Error('Hub not connected');
     console.log('[SignalR] collectPowerUp:', id);
     await this.hub.invoke('CollectPowerUp', id);
+  }
+
+  async setReady(ready: boolean): Promise<void> {
+    if (!this.hub) throw new Error('Hub not connected');
+    console.log('[SignalR] setReady:', ready);
+    await this.hub.invoke('SetReady', ready);
   }
 }

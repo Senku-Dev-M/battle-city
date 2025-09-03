@@ -10,5 +10,6 @@ public record PlayerStateDto(
     bool IsAlive,
     int Score,
     bool HasShield,
-    float Speed
+    float Speed,
+    bool IsReady = false
 );

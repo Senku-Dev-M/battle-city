@@ -8,6 +8,7 @@ export const selectHubConnected = createSelector(selectRoomState, (s) => s.hubCo
 export const selectJoined = createSelector(selectRoomState, (s) => s.joined);
 export const selectRoomError = createSelector(selectRoomState, (s) => s.error);
 export const selectChat = createSelector(selectRoomState, (s) => s.chat);
+export const selectGameStarted = createSelector(selectRoomState, (s) => s.gameStarted);
 
 const playersSelectors = roomPlayersAdapter.getSelectors();
 const bulletsSelectors = roomBulletsAdapter.getSelectors();

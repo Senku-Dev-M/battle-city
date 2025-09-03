@@ -9,6 +9,7 @@ export interface PlayerStateDto {
   score: number;
   hasShield: boolean;
   speed: number;
+  isReady: boolean;
 }
 
 export interface PlayerPositionDto {

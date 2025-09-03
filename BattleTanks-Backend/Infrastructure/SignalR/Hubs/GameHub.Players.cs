@@ -48,6 +48,10 @@ public partial class GameHub : Hub
         {
             await _rooms.JoinAsync(roomCode, userId, uname, Context.ConnectionId);
         }
+        catch (InvalidOperationException ex) when (ex.Message == "room_already_started")
+        {
+            throw new HubException("room_in_progress");
+        }
         catch
         {
             throw new HubException("room_not_found");
@@ -196,5 +200,13 @@ public partial class GameHub : Hub
             await _history.AddEventAsync(info.RoomCode, "playerMoved", fixedDto);
         }
         catch { }
+    }
+
+    public async Task SetReady(bool ready)
+    {
+        if (!_tracker.TryGet(Context.ConnectionId, out var info))
+            throw new HubException("not_in_room");
+
+        await _rooms.SetPlayerReadyAsync(info.RoomCode, info.UserId, ready);
     }
 }

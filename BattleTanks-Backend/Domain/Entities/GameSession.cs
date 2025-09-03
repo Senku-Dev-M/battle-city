@@ -1,4 +1,5 @@
 using Domain.Enums;
+using System.Linq;
 
 namespace Domain.Entities;
 
@@ -45,6 +46,7 @@ public class GameSession
 
     public bool TryAddPlayer(Player player)
     {
+        if (Status != GameRoomStatus.Waiting) return false;
         if (_players.Count >= MaxPlayers) return false;
         if (_players.Any(p => p.UserId == player.UserId)) return false;
 
@@ -70,14 +72,23 @@ public class GameSession
 
     public void StartGame()
     {
-        if (Status == GameRoomStatus.Waiting && _players.Count >= 2)
+        if (Status == GameRoomStatus.Waiting && _players.Count >= 2 && _players.All(p => p.IsReady))
         {
             Status = GameRoomStatus.InProgress;
             StartedAt = DateTime.UtcNow;
 
             foreach (var player in _players)
+            {
                 player.ResetSessionStats();
+                player.SetReady(false);
+            }
         }
+    }
+
+    public void SetPlayerReady(Guid userId, bool ready)
+    {
+        var player = _players.FirstOrDefault(p => p.UserId == userId);
+        player?.SetReady(ready);
     }
 
     public void EndGame()
