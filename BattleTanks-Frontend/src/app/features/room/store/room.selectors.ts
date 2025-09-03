@@ -9,6 +9,8 @@ export const selectJoined = createSelector(selectRoomState, (s) => s.joined);
 export const selectRoomError = createSelector(selectRoomState, (s) => s.error);
 export const selectChat = createSelector(selectRoomState, (s) => s.chat);
 export const selectGameStarted = createSelector(selectRoomState, (s) => s.gameStarted);
+export const selectGameFinished = createSelector(selectRoomState, (s) => s.gameFinished);
+export const selectWinnerId = createSelector(selectRoomState, (s) => s.winnerId);
 
 const playersSelectors = roomPlayersAdapter.getSelectors();
 const bulletsSelectors = roomBulletsAdapter.getSelectors();

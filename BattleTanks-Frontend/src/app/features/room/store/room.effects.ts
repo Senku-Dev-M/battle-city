@@ -48,6 +48,7 @@ events$ = createEffect(() =>
         this.hub.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId }))),
         this.hub.playerReady$.pipe(map((p) => roomActions.playerReady(p))),
         this.hub.gameStarted$.pipe(map(() => roomActions.gameStarted())),
+        this.hub.gameFinished$.pipe(map((winnerId) => roomActions.gameFinished({ winnerId }))),
         // MQTT events
         this.mqtt.playerJoined$.pipe(map((p) => roomActions.playerJoined(p))),
         this.mqtt.playerLeft$.pipe(map((userId) => roomActions.playerLeft({ userId }))),
@@ -56,7 +57,8 @@ events$ = createEffect(() =>
         this.mqtt.bulletSpawned$.pipe(map((bullet) => roomActions.bulletSpawned({ bullet }))),
         this.mqtt.bulletDespawned$.pipe(map(({ bulletId }) => roomActions.bulletDespawned({ bulletId }))),
         this.mqtt.playerHit$.pipe(map((dto) => roomActions.playerHit({ dto }))),
-        this.mqtt.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId })))
+        this.mqtt.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId }))),
+        this.mqtt.gameFinished$.pipe(map((winnerId) => roomActions.gameFinished({ winnerId })))
       ).pipe(takeUntil(stop$));
     })
   )

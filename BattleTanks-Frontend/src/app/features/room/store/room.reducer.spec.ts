@@ -15,6 +15,9 @@ describe('Room Reducer', () => {
       bullets: roomBulletsAdapter.getInitialState(),
       chat: [],
       lastUsername: null,
+      gameStarted: false,
+      gameFinished: false,
+      winnerId: null,
     };
   });
 

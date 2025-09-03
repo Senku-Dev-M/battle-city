@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Application.DTOs;
 using Microsoft.AspNetCore.SignalR;
+using Domain.Enums;
 
 namespace Infrastructure.SignalR.Hubs;
 
@@ -167,6 +169,8 @@ public partial class GameHub : Hub
                         await _history.AddEventAsync(roomCode, "playerDied", new { playerId = dto.TargetPlayerId });
                     }
                     catch { }
+
+                    await CheckForGameOver(roomCode);
                 }
             }
         }
@@ -191,6 +195,48 @@ public partial class GameHub : Hub
         {
             await _mqtt.PublishAsync($"game/{roomCode}/events/bulletDespawned", new { bulletId, reason = "block" });
             await _history.AddEventAsync(roomCode, "bulletDespawned", new { bulletId, reason = "block" });
+        }
+        catch { }
+    }
+
+    private async Task CheckForGameOver(string roomCode)
+    {
+        if (!_playerLivesByRoom.TryGetValue(roomCode, out var roomLives))
+            return;
+
+        var alive = roomLives.Where(kv => kv.Value > 0).Select(kv => kv.Key).ToList();
+        if (alive.Count > 1)
+            return;
+
+        var snapshot = await _rooms.GetByCodeAsync(roomCode);
+        if (snapshot == null || snapshot.Status != GameRoomStatus.InProgress.ToString())
+            return;
+
+        var winnerId = alive.Count == 1 ? alive[0] : null;
+
+        await _rooms.UpsertRoomAsync(
+            snapshot.RoomId,
+            snapshot.RoomCode,
+            snapshot.Name,
+            snapshot.MaxPlayers,
+            snapshot.IsPublic,
+            GameRoomStatus.Finished.ToString());
+
+        if (Guid.TryParse(snapshot.RoomId, out var roomGuid))
+        {
+            await _sessions.UpdateStatusAsync(roomGuid, GameRoomStatus.Finished);
+        }
+
+        _playerLivesByRoom.TryRemove(roomCode, out _);
+        _playerScoresByRoom.TryRemove(roomCode, out _);
+        _bulletsByRoom.TryRemove(roomCode, out _);
+
+        await Clients.Group(roomCode).SendAsync("gameFinished", winnerId);
+
+        try
+        {
+            await _mqtt.PublishAsync($"game/{roomCode}/events/gameFinished", new { winnerId });
+            await _history.AddEventAsync(roomCode, "gameFinished", new { winnerId });
         }
         catch { }
     }

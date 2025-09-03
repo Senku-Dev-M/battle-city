@@ -5,7 +5,15 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { roomActions } from './store/room.actions';
-import { selectHubConnected, selectJoined, selectRoomError, selectPlayers, selectGameStarted } from './store/room.selectors';
+import {
+  selectHubConnected,
+  selectJoined,
+  selectRoomError,
+  selectPlayers,
+  selectGameStarted,
+  selectGameFinished,
+  selectWinnerId,
+} from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
@@ -27,6 +35,8 @@ export class RoomComponent implements OnInit, OnDestroy {
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
   user         = toSignal(this.store.select(selectUser),         { initialValue: null });
   gameStarted  = toSignal(this.store.select(selectGameStarted),  { initialValue: false });
+  gameFinished = toSignal(this.store.select(selectGameFinished), { initialValue: false });
+  winnerId     = toSignal(this.store.select(selectWinnerId),     { initialValue: null });
 
   /**
    * Signal containing the list of players in the current room.  Used to derive the current player's

@@ -1,10 +1,12 @@
 ﻿using Application.DTOs;
+using Application.Interfaces;
 using Infrastructure.SignalR.Abstractions;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Security.Claims;
 using Infrastructure.Interfaces;
+using Domain.Enums;
 
 namespace Infrastructure.SignalR.Hubs;
 
@@ -14,13 +16,20 @@ public partial class GameHub : Hub
     private readonly IRoomRegistry _rooms;
     private readonly IMqttService _mqtt;
     private readonly IEventHistoryService _history;
+    private readonly IGameSessionRepository _sessions;
 
-    public GameHub(IConnectionTracker tracker, IRoomRegistry rooms, IMqttService mqtt, IEventHistoryService history)
+    public GameHub(
+        IConnectionTracker tracker,
+        IRoomRegistry rooms,
+        IMqttService mqtt,
+        IEventHistoryService history,
+        IGameSessionRepository sessions)
     {
         _tracker = tracker;
         _rooms = rooms;
         _mqtt = mqtt;
         _history = history;
+        _sessions = sessions;
     }
 
     private static readonly (int x, int y)[] _spawnPoints = new[]
@@ -156,6 +165,8 @@ public partial class GameHub : Hub
                 await _history.AddEventAsync(left.roomCode!, "playerLeft", new { userId = left.userId });
             }
             catch { }
+
+            await CheckForGameOver(left.roomCode!);
         }
     }
 

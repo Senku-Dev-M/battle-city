@@ -37,6 +37,7 @@ export const roomActions = createActionGroup({
     'Message Received': props<{ msg: ChatMessageDto }>(),
     'Player Ready': props<{ userId: string; ready: boolean }>(),
     'Game Started': emptyProps(),
+    'Game Finished': props<{ winnerId: string | null }>(),
 
     // Cliente→servidor
     'Send Message': props<{ content: string }>(),
