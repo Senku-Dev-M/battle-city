@@ -166,8 +166,9 @@ events$ = createEffect(() =>
   leave$ = createEffect(() =>
     this.actions$.pipe(
       ofType(roomActions.leaveRoom),
-      switchMap(() =>
-        from(this.hub.disconnect()).pipe(
+      withLatestFrom(this.store.select(selectRoomCode)),
+      switchMap(([_, code]) =>
+        (code ? from(this.hub.leaveRoom(code)) : of(void 0)).pipe(
           map(() => roomActions.left()),
           catchError(() => of(roomActions.left()))
         )
