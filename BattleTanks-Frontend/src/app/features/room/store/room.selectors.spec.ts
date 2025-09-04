@@ -24,6 +24,9 @@ describe('Room Selectors', () => {
       bullets,
       chat: [],
       lastUsername: 'juan',
+      gameStarted: false,
+      gameFinished: false,
+      winnerId: null,
     };
     state = { room };
   });

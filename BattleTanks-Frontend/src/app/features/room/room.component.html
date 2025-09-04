@@ -15,10 +15,9 @@
     @if (joined()) {
       @if (gameStarted()) {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 relative">
-            @if (!myAlive()) {
-              <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-red-300 rounded-md px-4 py-8 space-y-3">
-                <h2 class="text-lg">¡Has perdido!</h2>
-                <p class="text-xs">Te quedaste sin vidas.</p>
+            @if (gameFinished()) {
+              <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-yellow-300 rounded-md px-4 py-8 space-y-3">
+                <h2 class="text-lg">{{ myPlayer()?.playerId === winnerId() ? '¡Ganaste!' : '¡Has perdido!' }}</h2>
                 <a routerLink="/lobby" class="pixel-btn text-xs">Volver al lobby</a>
               </div>
             }

@@ -16,6 +16,8 @@ export interface RoomState {
   chat: ChatMessageDto[];
   lastUsername: string | null;
   gameStarted: boolean;
+  gameFinished: boolean;
+  winnerId: string | null;
 }
 
 const playersAdapter = createEntityAdapter<PlayerEntity>({
@@ -35,6 +37,8 @@ const initialState: RoomState = {
   chat: [],
   lastUsername: null,
   gameStarted: false,
+  gameFinished: false,
+  winnerId: null,
 };
 
 export const roomReducer = createReducer(
@@ -47,8 +51,8 @@ export const roomReducer = createReducer(
   on(roomActions.hubError, (s, { error }) => ({ ...s, error })),
 
   // Room lifecycle
-  on(roomActions.joinRoom, (s, { code, username }) => ({ ...s, roomCode: code, lastUsername: username, error: null })),
-  on(roomActions.joined, (s) => ({ ...s, joined: true, gameStarted: false })),
+  on(roomActions.joinRoom, (s, { code, username }) => ({ ...s, roomCode: code, lastUsername: username, error: null, gameFinished: false, winnerId: null })),
+  on(roomActions.joined, (s) => ({ ...s, joined: true, gameStarted: false, gameFinished: false, winnerId: null })),
   on(roomActions.leaveRoom, (s) => ({ ...s, joined: false })),
   on(roomActions.left, (s) => ({
     ...s,
@@ -58,6 +62,8 @@ export const roomReducer = createReducer(
     bullets: bulletsAdapter.removeAll(s.bullets),
     chat: [],
     gameStarted: false,
+    gameFinished: false,
+    winnerId: null,
   })),
 
   // Player events
@@ -170,6 +176,7 @@ export const roomReducer = createReducer(
   }),
 
   on(roomActions.gameStarted, (s) => ({ ...s, gameStarted: true })),
+  on(roomActions.gameFinished, (s, { winnerId }) => ({ ...s, gameFinished: true, winnerId })),
 
   // Chat messages
   on(roomActions.messageReceived, (s, { msg }) => ({

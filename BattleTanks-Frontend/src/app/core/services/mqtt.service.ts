@@ -24,6 +24,7 @@ export class MqttService {
   readonly bulletDespawned$ = new Subject<{ bulletId: string; reason: string }>();
   readonly playerHit$ = new Subject<PlayerHitDto>();
   readonly playerDied$ = new Subject<string>();
+  readonly gameFinished$ = new Subject<string | null>();
 
   connect(roomCode: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -98,6 +99,9 @@ export class MqttService {
             case 'playerDied':
               const id = typeof data === 'string' ? data : data.playerId;
               this.playerDied$.next(id);
+              break;
+            case 'gameFinished':
+              this.gameFinished$.next(data?.winnerId ?? null);
               break;
             default:
               console.warn('[MQTT] Unknown event type received:', eventType, data);

@@ -33,6 +33,7 @@ export class SignalRService {
   readonly powerUpState$ = new Subject<PowerUpDto[]>();
   readonly playerReady$ = new Subject<{ userId: string; ready: boolean }>();
   readonly gameStarted$ = new Subject<void>();
+  readonly gameFinished$ = new Subject<string | null>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -98,6 +99,11 @@ export class SignalRService {
     this.hub.on('gameStarted', () => {
       console.log('[SignalR] gameStarted');
       this.gameStarted$.next();
+    });
+
+    this.hub.on('gameFinished', (winnerId: string | null) => {
+      console.log('[SignalR] gameFinished:', winnerId);
+      this.gameFinished$.next(winnerId);
     });
 
     this.hub.on('mapState', (map: any[]) => {
