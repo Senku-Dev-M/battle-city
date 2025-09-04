@@ -5,7 +5,7 @@ import { SignalRService } from '../../../core/services/signalr.service';
 import { MqttService } from '../../../core/services/mqtt.service';
 import { catchError, filter, from, map, merge, mergeMap, of, switchMap, takeUntil, tap, throttleTime, withLatestFrom } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { selectRoomCode } from './room.selectors';
+import { selectRoomCode, selectGameFinished } from './room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { RoomService } from '../../../core/services/room.service'; 
 import { RoomStateDto } from '../../../core/models/room.models';
@@ -103,8 +103,12 @@ events$ = createEffect(() =>
   rejoinOnReconnected$ = createEffect(() =>
     this.actions$.pipe(
       ofType(roomActions.hubReconnected),
-      withLatestFrom(this.store.select(selectRoomCode), this.store.select(selectUser)),
-      filter(([_, code, user]) => !!code && !!user?.username),
+      withLatestFrom(
+        this.store.select(selectRoomCode),
+        this.store.select(selectUser),
+        this.store.select(selectGameFinished)
+      ),
+      filter(([_, code, user, finished]) => !!code && !!user?.username && !finished),
       switchMap(([_, code, user]) =>
         from(this.hub.joinRoom(code as string, user!.username)).pipe(
           map(() => roomActions.joined()),

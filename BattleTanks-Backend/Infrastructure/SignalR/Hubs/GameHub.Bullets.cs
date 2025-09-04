@@ -227,22 +227,22 @@ public partial class GameHub : Hub
             await _sessions.UpdateStatusAsync(roomGuid, GameRoomStatus.Finished);
         }
 
+        // Notify clients of game end and individual match results before cleaning up state
+        await Clients.Group(roomCode).SendAsync("gameFinished", winnerId);
+
+        foreach (var kv in roomLives)
+        {
+            var connId = _tracker.GetConnectionIdByUserId(kv.Key);
+            if (connId != null)
+            {
+                var didWin = kv.Value > 0;
+                await Clients.Client(connId).SendAsync("matchResult", didWin);
+            }
+        }
+
         _playerLivesByRoom.TryRemove(roomCode, out _);
         _playerScoresByRoom.TryRemove(roomCode, out _);
         _bulletsByRoom.TryRemove(roomCode, out _);
-
-        await Clients.Group(roomCode).SendAsync("gameFinished", winnerId);
-
-        var winnerConn = winnerId != null ? _tracker.GetConnectionIdByUserId(winnerId) : null;
-        if (winnerConn != null)
-        {
-            await Clients.Client(winnerConn).SendAsync("matchResult", true);
-            await Clients.GroupExcept(roomCode, new[] { winnerConn }).SendAsync("matchResult", false);
-        }
-        else
-        {
-            await Clients.Group(roomCode).SendAsync("matchResult", false);
-        }
 
         try
         {

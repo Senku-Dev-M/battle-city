@@ -15,6 +15,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class SignalRService {
   private hub: HubConnection | null = null;
+  private manualDisconnect = false;
 
   readonly playerJoined$ = new Subject<{ userId: string; username: string }>();
   readonly playerLeft$ = new Subject<string>();
@@ -41,6 +42,7 @@ export class SignalRService {
   }
 
   async connect(): Promise<void> {
+    this.manualDisconnect = false;
     if (this.hub) {
       if (this.hub.state === 'Connected' || this.hub.state === 'Connecting') {
         return;
@@ -203,6 +205,9 @@ export class SignalRService {
     this.hub.onclose(() => {
       console.warn('[SignalR] Connection closed');
       this.disconnected$.next();
+      if (!this.manualDisconnect) {
+        this.connect().catch((err) => console.error('[SignalR] Auto reconnect failed', err));
+      }
     });
 
     console.log('[SignalR] Starting connection...');
@@ -214,6 +219,7 @@ export class SignalRService {
     if (!this.hub) return;
     const hub = this.hub;
     this.hub = null;
+    this.manualDisconnect = true;
     try {
       console.log('[SignalR] Disconnecting...');
       try {
