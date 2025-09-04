@@ -28,6 +28,24 @@ const bulletsAdapter = createEntityAdapter<BulletEntity>({
   selectId: (b) => b.bulletId,
 });
 
+const PLAYER_COLOURS = [
+  '#f87171', // red-400
+  '#34d399', // green-400
+  '#60a5fa', // blue-400
+  '#fbbf24', // yellow-400
+  '#d946ef', // fuchsia-500
+  '#fb923c', // orange-400
+  '#2dd4bf', // teal-400
+  '#a78bfa', // purple-400
+];
+
+function recolor(state: EntityState<PlayerEntity>): EntityState<PlayerEntity> {
+  const list = Object.values(state.entities).filter((p): p is PlayerEntity => !!p);
+  const sorted = [...list].sort((a, b) => a.playerId.localeCompare(b.playerId));
+  const coloured = sorted.map((p, i) => ({ ...p, color: PLAYER_COLOURS[i % PLAYER_COLOURS.length] }));
+  return playersAdapter.setAll(coloured, state);
+}
+
 const initialState: RoomState = {
   roomCode: null,
   joined: false,
@@ -84,14 +102,18 @@ export const roomReducer = createReducer(
         hasShield: existing?.hasShield ?? false,
         speed: existing?.speed ?? 200,
         isReady: existing?.isReady ?? false,
+        color: existing?.color,
       };
-    return { ...s, players: playersAdapter.upsertOne(upsert, s.players) };
+    let playersState = playersAdapter.upsertOne(upsert, s.players);
+    playersState = recolor(playersState);
+    return { ...s, players: playersState };
   }),
 
-  on(roomActions.playerLeft, (s, { userId }) => ({
-    ...s,
-    players: playersAdapter.removeOne(userId, s.players),
-  })),
+  on(roomActions.playerLeft, (s, { userId }) => {
+    let playersState = playersAdapter.removeOne(userId, s.players);
+    playersState = recolor(playersState);
+    return { ...s, players: playersState };
+  }),
 
   on(roomActions.playerMoved, (s, { player }) => {
     const incomingId = (player as any).playerId;
@@ -109,6 +131,7 @@ export const roomReducer = createReducer(
         hasShield: (player as any).hasShield ?? existing?.hasShield ?? false,
         speed: (player as any).speed ?? existing?.speed ?? 200,
         isReady: existing?.isReady ?? false,
+        color: existing?.color,
       };
     return { ...s, players: playersAdapter.upsertOne(merged, s.players) };
   }),
@@ -126,6 +149,7 @@ export const roomReducer = createReducer(
         hasShield: existing.hasShield,
         speed: existing.speed,
         isReady: existing.isReady,
+        color: existing.color,
       };
       playersState = playersAdapter.upsertOne(updatedTarget, playersState);
 
@@ -135,6 +159,7 @@ export const roomReducer = createReducer(
           ...shooter,
           score: dto.shooterScoreAfter,
           isReady: shooter.isReady,
+          color: shooter.color,
         };
         playersState = playersAdapter.upsertOne(updatedShooter, playersState);
       }
@@ -151,6 +176,7 @@ export const roomReducer = createReducer(
         hasShield: existing.hasShield,
         speed: existing.speed,
         isReady: existing.isReady,
+        color: existing.color,
       };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
@@ -166,15 +192,16 @@ export const roomReducer = createReducer(
   })),
 
   // Roster load
-  on(roomActions.rosterLoaded, (s, { players }) => ({
-    ...s,
-    players: playersAdapter.upsertMany(players, s.players),
-  })),
+  on(roomActions.rosterLoaded, (s, { players }) => {
+    let playersState = playersAdapter.upsertMany(players, s.players);
+    playersState = recolor(playersState);
+    return { ...s, players: playersState };
+  }),
 
   on(roomActions.playerReady, (s, { userId, ready }) => {
     const existing = s.players.entities[userId];
     if (!existing) return s;
-    const updated: PlayerStateDto = { ...existing, isReady: ready };
+    const updated: PlayerStateDto = { ...existing, isReady: ready, color: existing.color };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
 

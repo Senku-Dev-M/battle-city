@@ -10,6 +10,8 @@ export interface PlayerStateDto {
   hasShield: boolean;
   speed: number;
   isReady: boolean;
+  /** Hex colour used to render the player's tank */
+  color?: string;
 }
 
 export interface PlayerPositionDto {

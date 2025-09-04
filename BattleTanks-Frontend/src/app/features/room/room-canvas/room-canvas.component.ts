@@ -128,6 +128,14 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     }
   });
 
+  private darken(hex: string): string {
+    const num = parseInt(hex.slice(1), 16);
+    const r = Math.max(0, ((num >> 16) & 0xff) - 40);
+    const g = Math.max(0, ((num >> 8) & 0xff) - 40);
+    const b = Math.max(0, (num & 0xff) - 40);
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d');
@@ -456,9 +464,10 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       ctx.rotate(p.rotation || 0);
 
       // Player body
-      ctx.fillStyle = isMe ? '#8ac7f3' : '#3b82f6';
+      const body = p.color ?? '#3b82f6';
+      ctx.fillStyle = body;
       ctx.fillRect(-12, -8, 24, 16);
-      ctx.fillStyle = isMe ? '#34a3ff' : '#1e40af';
+      ctx.fillStyle = this.darken(body);
       ctx.fillRect(0, -2, 16, 4);
 
       ctx.restore();
