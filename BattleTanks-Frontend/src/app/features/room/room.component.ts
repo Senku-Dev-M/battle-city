@@ -13,6 +13,7 @@ import {
   selectGameStarted,
   selectGameFinished,
   selectWinnerId,
+  selectLastUsername,
 } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
@@ -34,6 +35,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   joined       = toSignal(this.store.select(selectJoined),       { initialValue: false });
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
   user         = toSignal(this.store.select(selectUser),         { initialValue: null });
+  lastUsername = toSignal(this.store.select(selectLastUsername), { initialValue: null });
   gameStarted  = toSignal(this.store.select(selectGameStarted),  { initialValue: false });
   gameFinished = toSignal(this.store.select(selectGameFinished), { initialValue: false });
   winnerId     = toSignal(this.store.select(selectWinnerId),     { initialValue: null });
@@ -49,12 +51,15 @@ export class RoomComponent implements OnInit, OnDestroy {
    * against the list of players.  Returns null if the player has not yet joined the room.
    */
   myPlayer = computed(() => {
-    const me = this.user();
     const roster = this.players();
-    if (!me) return null;
-    const myId   = me.id;
-    const myName = me.username?.toLowerCase() ?? '';
-    return roster.find(p => p.playerId === myId || (p.username?.toLowerCase() ?? '') === myName) ?? null;
+    const me = this.user();
+    if (me) {
+      const myId = me.id;
+      const myName = me.username?.toLowerCase() ?? '';
+      return roster.find(p => p.playerId === myId || (p.username?.toLowerCase() ?? '') === myName) ?? null;
+    }
+    const last = this.lastUsername()?.toLowerCase() ?? '';
+    return roster.find(p => (p.username?.toLowerCase() ?? '') === last) ?? null;
   });
 
   /**
