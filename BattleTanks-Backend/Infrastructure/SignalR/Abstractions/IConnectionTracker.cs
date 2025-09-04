@@ -6,4 +6,5 @@ public interface IConnectionTracker
     bool TryGet(string connectionId, out (string RoomId, string RoomCode, string UserId, string Username) info);
     void Remove(string connectionId);
     int CountByRoom(string roomCode);
+    string? GetConnectionIdByUserId(string userId);
 }

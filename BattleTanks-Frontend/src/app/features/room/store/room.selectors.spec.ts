@@ -27,6 +27,7 @@ describe('Room Selectors', () => {
       gameStarted: false,
       gameFinished: false,
       winnerId: null,
+      didWin: null,
     };
     state = { room };
   });

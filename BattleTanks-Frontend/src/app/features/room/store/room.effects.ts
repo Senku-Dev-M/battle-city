@@ -5,7 +5,7 @@ import { SignalRService } from '../../../core/services/signalr.service';
 import { MqttService } from '../../../core/services/mqtt.service';
 import { catchError, filter, from, map, merge, mergeMap, of, switchMap, takeUntil, tap, throttleTime, withLatestFrom } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { selectRoomCode } from './room.selectors';
+import { selectRoomCode, selectGameFinished } from './room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { RoomService } from '../../../core/services/room.service'; 
 import { RoomStateDto } from '../../../core/models/room.models';
@@ -49,6 +49,7 @@ events$ = createEffect(() =>
         this.hub.playerReady$.pipe(map((p) => roomActions.playerReady(p))),
         this.hub.gameStarted$.pipe(map(() => roomActions.gameStarted())),
         this.hub.gameFinished$.pipe(map((winnerId) => roomActions.gameFinished({ winnerId }))),
+        this.hub.matchResult$.pipe(map((didWin) => roomActions.matchResult({ didWin }))),
         // MQTT events
         this.mqtt.playerJoined$.pipe(map((p) => roomActions.playerJoined(p))),
         this.mqtt.playerLeft$.pipe(map((userId) => roomActions.playerLeft({ userId }))),
@@ -102,8 +103,12 @@ events$ = createEffect(() =>
   rejoinOnReconnected$ = createEffect(() =>
     this.actions$.pipe(
       ofType(roomActions.hubReconnected),
-      withLatestFrom(this.store.select(selectRoomCode), this.store.select(selectUser)),
-      filter(([_, code, user]) => !!code && !!user?.username),
+      withLatestFrom(
+        this.store.select(selectRoomCode),
+        this.store.select(selectUser),
+        this.store.select(selectGameFinished)
+      ),
+      filter(([_, code, user, finished]) => !!code && !!user?.username && !finished),
       switchMap(([_, code, user]) =>
         from(this.hub.joinRoom(code as string, user!.username)).pipe(
           map(() => roomActions.joined()),
@@ -158,14 +163,17 @@ events$ = createEffect(() =>
   );
 
   // Leave / Disconnect
-  leave$ = createEffect(
-    () =>
-      this.actions$.pipe(
-        ofType(roomActions.leaveRoom),
-        mergeMap(() => from(this.hub.disconnect()).pipe(catchError(() => of(void 0)))),
-        tap(() => void 0)
-      ),
-    { dispatch: false }
+  leave$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(roomActions.leaveRoom),
+      withLatestFrom(this.store.select(selectRoomCode)),
+      switchMap(([_, code]) =>
+        (code ? from(this.hub.leaveRoom(code)) : of(void 0)).pipe(
+          map(() => roomActions.left()),
+          catchError(() => of(roomActions.left()))
+        )
+      )
+    )
   );
 
   /**

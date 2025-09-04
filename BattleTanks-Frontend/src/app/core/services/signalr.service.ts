@@ -15,6 +15,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class SignalRService {
   private hub: HubConnection | null = null;
+  private manualDisconnect = false;
 
   readonly playerJoined$ = new Subject<{ userId: string; username: string }>();
   readonly playerLeft$ = new Subject<string>();
@@ -34,13 +35,23 @@ export class SignalRService {
   readonly playerReady$ = new Subject<{ userId: string; ready: boolean }>();
   readonly gameStarted$ = new Subject<void>();
   readonly gameFinished$ = new Subject<string | null>();
+  readonly matchResult$ = new Subject<boolean>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
   }
 
   async connect(): Promise<void> {
-    if (this.hub) return;
+    this.manualDisconnect = false;
+    if (this.hub) {
+      if (this.hub.state === 'Connected' || this.hub.state === 'Connecting') {
+        return;
+      }
+      try {
+        await this.hub.stop();
+      } catch {}
+      this.hub = null;
+    }
 
     console.log('[SignalR] Creating connection to hub:', env.HUB_URL);
 
@@ -104,6 +115,11 @@ export class SignalRService {
     this.hub.on('gameFinished', (winnerId: string | null) => {
       console.log('[SignalR] gameFinished:', winnerId);
       this.gameFinished$.next(winnerId);
+    });
+
+    this.hub.on('matchResult', (didWin: boolean) => {
+      console.log('[SignalR] matchResult:', didWin);
+      this.matchResult$.next(didWin);
     });
 
     this.hub.on('mapState', (map: any[]) => {
@@ -189,6 +205,9 @@ export class SignalRService {
     this.hub.onclose(() => {
       console.warn('[SignalR] Connection closed');
       this.disconnected$.next();
+      if (!this.manualDisconnect) {
+        this.connect().catch((err) => console.error('[SignalR] Auto reconnect failed', err));
+      }
     });
 
     console.log('[SignalR] Starting connection...');
@@ -198,78 +217,90 @@ export class SignalRService {
 
   async disconnect(): Promise<void> {
     if (!this.hub) return;
+    const hub = this.hub;
+    this.hub = null;
+    this.manualDisconnect = true;
     try {
       console.log('[SignalR] Disconnecting...');
-      await this.hub.stop();
+      try {
+        await hub.invoke('LeaveRoom');
+      } catch {}
+      await hub.stop();
       console.log('[SignalR] Disconnected');
-    } finally {
-      this.hub = null;
+    } catch (err) {
+      console.error('[SignalR] Disconnect error', err);
     }
   }
 
   async joinRoom(roomCode: string, username: string, joinKey?: string | null): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] joinRoom invoked', { roomCode, username, joinKey });
-    await this.hub.invoke('JoinRoom', roomCode, username, joinKey ?? null);
+    await this.hub!.invoke('JoinRoom', roomCode, username, joinKey ?? null);
+  }
+
+  async leaveRoom(roomCode: string): Promise<void> {
+    if (!this.isConnected) throw new Error('Hub not connected');
+    console.log('[SignalR] leaveRoom invoked', roomCode);
+    await this.hub!.invoke('LeaveRoomGroup', roomCode);
   }
 
   async sendChat(content: string): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] sendChat:', content);
-    await this.hub.invoke('SendChat', content);
+    await this.hub!.invoke('SendChat', content);
   }
 
   async updatePosition(dto: PlayerPositionDto): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] updatePosition:', dto);
-    await this.hub.invoke('UpdatePosition', dto);
+    await this.hub!.invoke('UpdatePosition', dto);
   }
 
   async spawnBullet(x: number, y: number, directionRadians: number, speed: number): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] spawnBullet:', { x, y, directionRadians, speed });
-    await this.hub.invoke('SpawnBullet', x, y, directionRadians, speed);
+    await this.hub!.invoke('SpawnBullet', x, y, directionRadians, speed);
   }
 
   async reportHit(dto: BulletHitReportDto): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] reportHit:', dto);
-    await this.hub.invoke('ReportHit', dto);
+    await this.hub!.invoke('ReportHit', dto);
   }
 
   async reportBulletCollision(bulletId: string): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] reportBulletCollision:', bulletId);
-    await this.hub.invoke('ReportObstacleHit', bulletId);
+    await this.hub!.invoke('ReportObstacleHit', bulletId);
   }
 
   async getMap(): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] getMap');
-    await this.hub.invoke('GetMap');
+    await this.hub!.invoke('GetMap');
   }
 
   async destroyCell(x: number, y: number): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] destroyCell:', { x, y });
-    await this.hub.invoke('DestroyCell', x, y);
+    await this.hub!.invoke('DestroyCell', x, y);
   }
 
   async getPowerUps(): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] getPowerUps');
-    await this.hub.invoke('GetPowerUps');
+    await this.hub!.invoke('GetPowerUps');
   }
 
   async collectPowerUp(id: string): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] collectPowerUp:', id);
-    await this.hub.invoke('CollectPowerUp', id);
+    await this.hub!.invoke('CollectPowerUp', id);
   }
 
   async setReady(ready: boolean): Promise<void> {
-    if (!this.hub) throw new Error('Hub not connected');
+    if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] setReady:', ready);
-    await this.hub.invoke('SetReady', ready);
+    await this.hub!.invoke('SetReady', ready);
   }
 }

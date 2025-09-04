@@ -11,6 +11,7 @@ export const selectChat = createSelector(selectRoomState, (s) => s.chat);
 export const selectGameStarted = createSelector(selectRoomState, (s) => s.gameStarted);
 export const selectGameFinished = createSelector(selectRoomState, (s) => s.gameFinished);
 export const selectWinnerId = createSelector(selectRoomState, (s) => s.winnerId);
+export const selectDidWin = createSelector(selectRoomState, (s) => s.didWin);
 export const selectLastUsername = createSelector(selectRoomState, (s) => s.lastUsername);
 
 const playersSelectors = roomPlayersAdapter.getSelectors();

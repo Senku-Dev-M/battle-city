@@ -21,6 +21,7 @@ class SignalRServiceMock {
   reconnected$ = new Subject<void>();
   disconnected$ = new Subject<void>();
   gameFinished$ = new Subject<string | null>();
+  matchResult$ = new Subject<boolean>();
 
   connect = jasmine.createSpy('connect').and.returnValue(Promise.resolve());
   disconnect = jasmine.createSpy('disconnect').and.returnValue(Promise.resolve());

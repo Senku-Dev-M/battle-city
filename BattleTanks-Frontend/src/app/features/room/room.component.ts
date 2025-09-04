@@ -14,6 +14,7 @@ import {
   selectGameFinished,
   selectWinnerId,
   selectLastUsername,
+  selectDidWin,
 } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
@@ -39,6 +40,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   gameStarted  = toSignal(this.store.select(selectGameStarted),  { initialValue: false });
   gameFinished = toSignal(this.store.select(selectGameFinished), { initialValue: false });
   winnerId     = toSignal(this.store.select(selectWinnerId),     { initialValue: null });
+  didWin       = toSignal(this.store.select(selectDidWin),       { initialValue: null });
 
   /**
    * Signal containing the list of players in the current room.  Used to derive the current player's
