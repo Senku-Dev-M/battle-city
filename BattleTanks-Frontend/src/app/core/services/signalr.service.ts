@@ -241,7 +241,7 @@ export class SignalRService {
   async leaveRoom(roomCode: string): Promise<void> {
     if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] leaveRoom invoked', roomCode);
-    await this.hub!.invoke('LeaveRoom', roomCode);
+    await this.hub!.invoke('LeaveRoomGroup', roomCode);
   }
 
   async sendChat(content: string): Promise<void> {

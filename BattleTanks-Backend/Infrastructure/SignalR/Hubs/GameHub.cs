@@ -4,12 +4,12 @@ namespace Infrastructure.SignalR.Hubs;
 
 public partial class GameHub : Hub
 {
-    public async Task JoinRoom(string roomId)
+    public async Task JoinRoomGroup(string roomId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
     }
 
-    public async Task LeaveRoom(string roomId)
+    public async Task LeaveRoomGroup(string roomId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
     }
