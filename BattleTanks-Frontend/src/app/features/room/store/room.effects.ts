@@ -49,6 +49,7 @@ events$ = createEffect(() =>
         this.hub.playerReady$.pipe(map((p) => roomActions.playerReady(p))),
         this.hub.gameStarted$.pipe(map(() => roomActions.gameStarted())),
         this.hub.gameFinished$.pipe(map((winnerId) => roomActions.gameFinished({ winnerId }))),
+        this.hub.matchResult$.pipe(map((didWin) => roomActions.matchResult({ didWin }))),
         // MQTT events
         this.mqtt.playerJoined$.pipe(map((p) => roomActions.playerJoined(p))),
         this.mqtt.playerLeft$.pipe(map((userId) => roomActions.playerLeft({ userId }))),
@@ -158,14 +159,16 @@ events$ = createEffect(() =>
   );
 
   // Leave / Disconnect
-  leave$ = createEffect(
-    () =>
-      this.actions$.pipe(
-        ofType(roomActions.leaveRoom),
-        mergeMap(() => from(this.hub.disconnect()).pipe(catchError(() => of(void 0)))),
-        tap(() => void 0)
-      ),
-    { dispatch: false }
+  leave$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(roomActions.leaveRoom),
+      switchMap(() =>
+        from(this.hub.disconnect()).pipe(
+          map(() => roomActions.left()),
+          catchError(() => of(roomActions.left()))
+        )
+      )
+    )
   );
 
   /**

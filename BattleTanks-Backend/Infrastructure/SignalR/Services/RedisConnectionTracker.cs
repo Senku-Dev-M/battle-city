@@ -75,4 +75,17 @@ public class RedisConnectionTracker : IConnectionTracker
         }
         return count;
     }
+
+    public string? GetConnectionIdByUserId(string userId)
+    {
+        if (string.IsNullOrEmpty(userId)) return null;
+        var entries = _db.HashGetAll(CONNECTIONS_HASH_KEY);
+        foreach (var entry in entries)
+        {
+            var parts = ((string)entry.Value!).Split('|');
+            if (parts.Length >= 3 && parts[2] == userId)
+                return entry.Name!;
+        }
+        return null;
+    }
 }

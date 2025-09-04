@@ -18,6 +18,7 @@ describe('Room Reducer', () => {
       gameStarted: false,
       gameFinished: false,
       winnerId: null,
+      didWin: null,
     };
   });
 

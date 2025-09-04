@@ -18,4 +18,14 @@ public class InMemoryConnectionTracker : IConnectionTracker
 
     public int CountByRoom(string roomCode)
         => _map.Values.Count(v => v.RoomCode == roomCode);
+
+    public string? GetConnectionIdByUserId(string userId)
+    {
+        foreach (var kvp in _map)
+        {
+            if (kvp.Value.UserId == userId)
+                return kvp.Key;
+        }
+        return null;
+    }
 }

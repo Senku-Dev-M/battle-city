@@ -233,6 +233,17 @@ public partial class GameHub : Hub
 
         await Clients.Group(roomCode).SendAsync("gameFinished", winnerId);
 
+        var winnerConn = winnerId != null ? _tracker.GetConnectionIdByUserId(winnerId) : null;
+        if (winnerConn != null)
+        {
+            await Clients.Client(winnerConn).SendAsync("matchResult", true);
+            await Clients.GroupExcept(roomCode, new[] { winnerConn }).SendAsync("matchResult", false);
+        }
+        else
+        {
+            await Clients.Group(roomCode).SendAsync("matchResult", false);
+        }
+
         try
         {
             await _mqtt.PublishAsync($"game/{roomCode}/events/gameFinished", new { winnerId });
