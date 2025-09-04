@@ -2,3 +2,38 @@
   display: block;
   width: 100%;
 }
+
+.pixel-canvas {
+  position: relative;
+  background: #0b1622;
+  border: 4px solid #1f3864;
+  box-shadow:
+    inset 0 0 0 2px #0b1822,
+    0 0 0 2px #18345c,
+    0 8px 0 0 #0b1822,
+    0 8px 20px rgba(0,0,0,0.5);
+  border-radius: 8px;
+}
+
+.pixel-canvas::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.04) 0,
+    rgba(255,255,255,0.04) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  mix-blend-mode: overlay;
+  border-radius: inherit;
+}
+
+.pixel-canvas canvas {
+  display: block;
+  width: 100%;
+  border-radius: inherit;
+  image-rendering: pixelated;
+}

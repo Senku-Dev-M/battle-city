@@ -277,11 +277,11 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     ctx.clearRect(0, 0, c.width, c.height);
 
     // Background
-    ctx.fillStyle = '#0b1e16';
+    ctx.fillStyle = '#0b1622';
     ctx.fillRect(0, 0, c.width, c.height);
 
     // Grid lines
-    ctx.strokeStyle = 'rgba(34, 211, 238, 0.06)';
+    ctx.strokeStyle = 'rgba(0, 170, 255, 0.06)';
     ctx.lineWidth = 1;
     for (let x = 0; x < c.width; x += 40) {
       ctx.beginPath();
@@ -316,10 +316,10 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
         let fill: string;
         switch (val) {
           case 1: // destructible brick
-            fill = '#b45309'; // amber‑600
+            fill = '#1e3a8a'; // blue‑800
             break;
           case 2: // indestructible wall
-            fill = '#4b5563'; // stone‑600
+            fill = '#334155'; // slate‑700
             break;
           case 3: // special base (treated like destructible for now)
             fill = '#dc2626'; // red‑600
@@ -347,7 +347,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
 
     // Bullets in bright cyan. Each bullet's position is derived from its
     // spawn position, direction and speed, along with the time since spawn.
-    ctx.fillStyle = '#22d3ee';
+    ctx.fillStyle = '#34a3ff';
     const now = Date.now();
     this.bullets().forEach(b => {
       if (!b.isActive) return;
@@ -456,9 +456,9 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       ctx.rotate(p.rotation || 0);
 
       // Player body
-      ctx.fillStyle = isMe ? '#86e5f7' : '#22d3ee';
+      ctx.fillStyle = isMe ? '#8ac7f3' : '#3b82f6';
       ctx.fillRect(-12, -8, 24, 16);
-      ctx.fillStyle = isMe ? '#0ea5e9' : '#0284c7';
+      ctx.fillStyle = isMe ? '#34a3ff' : '#1e40af';
       ctx.fillRect(0, -2, 16, 4);
 
       ctx.restore();
@@ -466,9 +466,9 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       // Player name label
       const label = isMe ? 'TÚ' : (p.username ?? 'Tank');
       const bgW   = Math.max(24, label.length * 7);
-      ctx.fillStyle = '#0b1e16';
+      ctx.fillStyle = '#0b1622';
       ctx.fillRect(p.x - 18, p.y - 22, bgW, 12);
-      ctx.fillStyle = '#a7f3d0';
+      ctx.fillStyle = '#c5def2';
       ctx.font = '10px monospace';
       ctx.fillText(label, p.x - 16, p.y - 12);
     });
