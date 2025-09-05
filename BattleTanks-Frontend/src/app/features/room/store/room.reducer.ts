@@ -11,6 +11,7 @@ export interface RoomState {
   joined: boolean;
   hubConnected: boolean;
   error: string | null;
+  myId: string | null;
   players: EntityState<PlayerEntity>;
   bullets: EntityState<BulletEntity>;
   chat: ChatMessageDto[];
@@ -51,6 +52,7 @@ const initialState: RoomState = {
   joined: false,
   hubConnected: false,
   error: null,
+  myId: null,
   players: playersAdapter.getInitialState(),
   bullets: bulletsAdapter.getInitialState(),
   chat: [],
@@ -78,6 +80,7 @@ export const roomReducer = createReducer(
     ...s,
     joined: false,
     roomCode: null,
+    myId: null,
     players: playersAdapter.removeAll(s.players),
     bullets: bulletsAdapter.removeAll(s.bullets),
     chat: [],
@@ -108,6 +111,8 @@ export const roomReducer = createReducer(
     playersState = recolor(playersState);
     return { ...s, players: playersState };
   }),
+
+  on(roomActions.identityReceived, (s, { userId }) => ({ ...s, myId: userId })),
 
   on(roomActions.playerLeft, (s, { userId }) => {
     let playersState = playersAdapter.removeOne(userId, s.players);

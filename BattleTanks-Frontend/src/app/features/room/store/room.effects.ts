@@ -5,7 +5,7 @@ import { SignalRService } from '../../../core/services/signalr.service';
 import { MqttService } from '../../../core/services/mqtt.service';
 import { catchError, filter, from, map, merge, mergeMap, of, switchMap, takeUntil, tap, throttleTime, withLatestFrom } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { selectRoomCode, selectGameFinished, selectPlayers, selectLastUsername } from './room.selectors';
+import { selectRoomCode, selectGameFinished, selectMyId } from './room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { RoomService } from '../../../core/services/room.service'; 
 import { RoomStateDto } from '../../../core/models/room.models';
@@ -38,6 +38,7 @@ events$ = createEffect(() =>
       const stop$ = this.actions$.pipe(ofType(roomActions.hubDisconnected, roomActions.left));
       return merge(
         // SignalR events
+        this.hub.identity$.pipe(map((p) => roomActions.identityReceived({ userId: p.userId }))),
         this.hub.playerJoined$.pipe(map((p) => roomActions.playerJoined(p))),
         this.hub.playerLeft$.pipe(map((userId) => roomActions.playerLeft({ userId }))),
         this.hub.chatMessage$.pipe(map((msg) => roomActions.messageReceived({ msg }))),
@@ -49,20 +50,8 @@ events$ = createEffect(() =>
         this.hub.playerReady$.pipe(map((p) => roomActions.playerReady(p))),
         this.hub.gameStarted$.pipe(map(() => roomActions.gameStarted())),
         this.hub.gameFinished$.pipe(
-          withLatestFrom(
-            this.store.select(selectUser),
-            this.store.select(selectPlayers),
-            this.store.select(selectLastUsername)
-          ),
-          mergeMap(([winnerId, user, players, last]) => {
-            let myId = user?.id;
-            if (!myId) {
-              const lname = last?.toLowerCase() ?? '';
-              const me = players.find(
-                (p) => (p.username?.toLowerCase() ?? '') === lname
-              );
-              myId = me?.playerId;
-            }
+          withLatestFrom(this.store.select(selectMyId)),
+          mergeMap(([winnerId, myId]) => {
             const didWin = !!winnerId && winnerId === myId;
             return [
               roomActions.gameFinished({ winnerId }),
@@ -71,22 +60,8 @@ events$ = createEffect(() =>
           })
         ),
         this.hub.matchResult$.pipe(
-          withLatestFrom(
-            this.store.select(selectUser),
-            this.store.select(selectPlayers),
-            this.store.select(selectLastUsername)
-          ),
-          filter(([evt, user, players, last]) => {
-            let myId = user?.id;
-            if (!myId) {
-              const lname = last?.toLowerCase() ?? '';
-              const me = players.find(
-                (p) => (p.username?.toLowerCase() ?? '') === lname
-              );
-              myId = me?.playerId;
-            }
-            return evt.playerId === myId;
-          }),
+          withLatestFrom(this.store.select(selectMyId)),
+          filter(([evt, myId]) => evt.playerId === myId),
           map(([evt]) => roomActions.matchResult({ didWin: evt.didWin }))
         ),
         // MQTT events
@@ -99,20 +74,8 @@ events$ = createEffect(() =>
         this.mqtt.playerHit$.pipe(map((dto) => roomActions.playerHit({ dto }))),
         this.mqtt.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId }))),
         this.mqtt.gameFinished$.pipe(
-          withLatestFrom(
-            this.store.select(selectUser),
-            this.store.select(selectPlayers),
-            this.store.select(selectLastUsername)
-          ),
-          mergeMap(([winnerId, user, players, last]) => {
-            let myId = user?.id;
-            if (!myId) {
-              const lname = last?.toLowerCase() ?? '';
-              const me = players.find(
-                (p) => (p.username?.toLowerCase() ?? '') === lname
-              );
-              myId = me?.playerId;
-            }
+          withLatestFrom(this.store.select(selectMyId)),
+          mergeMap(([winnerId, myId]) => {
             const didWin = !!winnerId && winnerId === myId;
             return [
               roomActions.gameFinished({ winnerId }),
