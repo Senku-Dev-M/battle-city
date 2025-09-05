@@ -235,7 +235,7 @@ public partial class GameHub : Hub
             var connId = _tracker.GetConnectionIdByUserId(kv.Key);
             if (connId != null)
             {
-                var didWin = kv.Value > 0;
+                bool? didWin = winnerId == null ? (bool?)null : kv.Key == winnerId;
                 await Clients.Client(connId).SendAsync("matchResult", didWin);
             }
         }

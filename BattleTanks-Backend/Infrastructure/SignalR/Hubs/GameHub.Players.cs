@@ -69,13 +69,11 @@ public partial class GameHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
         _tracker.Set(Context.ConnectionId, (await _rooms.GetByCodeAsync(roomCode))!.RoomId, roomCode, userId, uname);
 
-        if (!_playerLivesByRoom.ContainsKey(roomCode))
-            _playerLivesByRoom[roomCode] = new();
-        _playerLivesByRoom[roomCode][userId] = 3;
+        var livesDict = _playerLivesByRoom.GetOrAdd(roomCode, _ => new());
+        livesDict[userId] = 3;
 
-        if (!_playerScoresByRoom.ContainsKey(roomCode))
-            _playerScoresByRoom[roomCode] = new();
-        _playerScoresByRoom[roomCode][userId] = 0;
+        var scoresDict = _playerScoresByRoom.GetOrAdd(roomCode, _ => new());
+        scoresDict[userId] = 0;
 
         await Clients.Group(roomCode).SendAsync("playerJoined", new { userId, username = uname });
         // Publish join event via MQTT and record in history

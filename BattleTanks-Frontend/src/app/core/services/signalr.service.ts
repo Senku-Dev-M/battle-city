@@ -35,7 +35,7 @@ export class SignalRService {
   readonly playerReady$ = new Subject<{ userId: string; ready: boolean }>();
   readonly gameStarted$ = new Subject<void>();
   readonly gameFinished$ = new Subject<string | null>();
-  readonly matchResult$ = new Subject<boolean>();
+  readonly matchResult$ = new Subject<boolean | null>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -117,7 +117,7 @@ export class SignalRService {
       this.gameFinished$.next(winnerId);
     });
 
-    this.hub.on('matchResult', (didWin: boolean) => {
+    this.hub.on('matchResult', (didWin: boolean | null) => {
       console.log('[SignalR] matchResult:', didWin);
       this.matchResult$.next(didWin);
     });
