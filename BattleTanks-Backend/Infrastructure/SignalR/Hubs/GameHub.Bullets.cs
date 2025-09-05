@@ -230,14 +230,14 @@ public partial class GameHub : Hub
         // Notify clients of game end and individual match results before cleaning up state
         await Clients.Group(roomCode).SendAsync("gameFinished", winnerId);
 
+        // Broadcast the match result for each player to the whole room so that
+        // clients can determine their own outcome even if connection tracking
+        // information is missing (e.g. room creator wins but does not receive
+        // a direct message).
         foreach (var kv in roomLives)
         {
-            var connId = _tracker.GetConnectionIdByUserId(kv.Key);
-            if (connId != null)
-            {
-                var didWin = kv.Value > 0;
-                await Clients.Client(connId).SendAsync("matchResult", didWin);
-            }
+            var didWin = kv.Value > 0;
+            await Clients.Group(roomCode).SendAsync("matchResult", kv.Key, didWin);
         }
 
         _playerLivesByRoom.TryRemove(roomCode, out _);

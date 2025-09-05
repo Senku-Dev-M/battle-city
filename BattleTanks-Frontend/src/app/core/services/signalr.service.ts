@@ -35,7 +35,10 @@ export class SignalRService {
   readonly playerReady$ = new Subject<{ userId: string; ready: boolean }>();
   readonly gameStarted$ = new Subject<void>();
   readonly gameFinished$ = new Subject<string | null>();
-  readonly matchResult$ = new Subject<boolean>();
+  // Emits the playerId and whether that player won.  Broadcasting the
+  // player id allows clients to filter the result locally, ensuring the
+  // creator also receives their correct outcome.
+  readonly matchResult$ = new Subject<{ playerId: string; didWin: boolean }>();
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -117,9 +120,9 @@ export class SignalRService {
       this.gameFinished$.next(winnerId);
     });
 
-    this.hub.on('matchResult', (didWin: boolean) => {
-      console.log('[SignalR] matchResult:', didWin);
-      this.matchResult$.next(didWin);
+    this.hub.on('matchResult', (playerId: string, didWin: boolean) => {
+      console.log('[SignalR] matchResult:', playerId, didWin);
+      this.matchResult$.next({ playerId, didWin });
     });
 
     this.hub.on('mapState', (map: any[]) => {

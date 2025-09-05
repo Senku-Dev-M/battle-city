@@ -5,7 +5,7 @@ import { SignalRService } from '../../../core/services/signalr.service';
 import { MqttService } from '../../../core/services/mqtt.service';
 import { catchError, filter, from, map, merge, mergeMap, of, switchMap, takeUntil, tap, throttleTime, withLatestFrom } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { selectRoomCode, selectGameFinished } from './room.selectors';
+import { selectRoomCode, selectGameFinished, selectPlayers, selectLastUsername } from './room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { RoomService } from '../../../core/services/room.service'; 
 import { RoomStateDto } from '../../../core/models/room.models';
@@ -48,8 +48,47 @@ events$ = createEffect(() =>
         this.hub.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId }))),
         this.hub.playerReady$.pipe(map((p) => roomActions.playerReady(p))),
         this.hub.gameStarted$.pipe(map(() => roomActions.gameStarted())),
-        this.hub.gameFinished$.pipe(map((winnerId) => roomActions.gameFinished({ winnerId }))),
-        this.hub.matchResult$.pipe(map((didWin) => roomActions.matchResult({ didWin }))),
+        this.hub.gameFinished$.pipe(
+          withLatestFrom(
+            this.store.select(selectUser),
+            this.store.select(selectPlayers),
+            this.store.select(selectLastUsername)
+          ),
+          mergeMap(([winnerId, user, players, last]) => {
+            let myId = user?.id;
+            if (!myId) {
+              const lname = last?.toLowerCase() ?? '';
+              const me = players.find(
+                (p) => (p.username?.toLowerCase() ?? '') === lname
+              );
+              myId = me?.playerId;
+            }
+            const didWin = !!winnerId && winnerId === myId;
+            return [
+              roomActions.gameFinished({ winnerId }),
+              roomActions.matchResult({ didWin }),
+            ];
+          })
+        ),
+        this.hub.matchResult$.pipe(
+          withLatestFrom(
+            this.store.select(selectUser),
+            this.store.select(selectPlayers),
+            this.store.select(selectLastUsername)
+          ),
+          filter(([evt, user, players, last]) => {
+            let myId = user?.id;
+            if (!myId) {
+              const lname = last?.toLowerCase() ?? '';
+              const me = players.find(
+                (p) => (p.username?.toLowerCase() ?? '') === lname
+              );
+              myId = me?.playerId;
+            }
+            return evt.playerId === myId;
+          }),
+          map(([evt]) => roomActions.matchResult({ didWin: evt.didWin }))
+        ),
         // MQTT events
         this.mqtt.playerJoined$.pipe(map((p) => roomActions.playerJoined(p))),
         this.mqtt.playerLeft$.pipe(map((userId) => roomActions.playerLeft({ userId }))),
@@ -59,7 +98,28 @@ events$ = createEffect(() =>
         this.mqtt.bulletDespawned$.pipe(map(({ bulletId }) => roomActions.bulletDespawned({ bulletId }))),
         this.mqtt.playerHit$.pipe(map((dto) => roomActions.playerHit({ dto }))),
         this.mqtt.playerDied$.pipe(map((playerId) => roomActions.playerDied({ playerId }))),
-        this.mqtt.gameFinished$.pipe(map((winnerId) => roomActions.gameFinished({ winnerId })))
+        this.mqtt.gameFinished$.pipe(
+          withLatestFrom(
+            this.store.select(selectUser),
+            this.store.select(selectPlayers),
+            this.store.select(selectLastUsername)
+          ),
+          mergeMap(([winnerId, user, players, last]) => {
+            let myId = user?.id;
+            if (!myId) {
+              const lname = last?.toLowerCase() ?? '';
+              const me = players.find(
+                (p) => (p.username?.toLowerCase() ?? '') === lname
+              );
+              myId = me?.playerId;
+            }
+            const didWin = !!winnerId && winnerId === myId;
+            return [
+              roomActions.gameFinished({ winnerId }),
+              roomActions.matchResult({ didWin }),
+            ];
+          })
+        )
       ).pipe(takeUntil(stop$));
     })
   )
