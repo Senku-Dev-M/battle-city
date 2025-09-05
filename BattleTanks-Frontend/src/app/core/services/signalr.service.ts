@@ -36,6 +36,9 @@ export class SignalRService {
   readonly gameStarted$ = new Subject<void>();
   readonly gameFinished$ = new Subject<string | null>();
   readonly matchResult$ = new Subject<boolean | null>();
+  readonly matchResults$ = new Subject<{ winnerId: string | null; results: { playerId: string; didWin: boolean | null }[] }>();
+
+  private lastJoin: { roomCode: string; username: string; joinKey?: string | null } | null = null;
 
   get isConnected() {
     return !!this.hub && this.hub.state === 'Connected';
@@ -122,6 +125,11 @@ export class SignalRService {
       this.matchResult$.next(didWin);
     });
 
+    this.hub.on('matchResults', (payload) => {
+      console.log('[SignalR] matchResults:', payload);
+      this.matchResults$.next(payload);
+    });
+
     this.hub.on('mapState', (map: any[]) => {
       console.log('[SignalR] mapState:', map);
       this.mapState$.next(map);
@@ -200,6 +208,12 @@ export class SignalRService {
     this.hub.onreconnected(() => {
       console.log('[SignalR] Reconnected');
       this.reconnected$.next();
+      if (this.lastJoin) {
+        const { roomCode, username, joinKey } = this.lastJoin;
+        this.hub!
+          .invoke('JoinRoom', roomCode, username, joinKey ?? null)
+          .catch((err) => console.error('[SignalR] Rejoin failed', err));
+      }
     });
 
     this.hub.onclose(() => {
@@ -235,6 +249,7 @@ export class SignalRService {
   async joinRoom(roomCode: string, username: string, joinKey?: string | null): Promise<void> {
     if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] joinRoom invoked', { roomCode, username, joinKey });
+    this.lastJoin = { roomCode, username, joinKey: joinKey ?? null };
     await this.hub!.invoke('JoinRoom', roomCode, username, joinKey ?? null);
   }
 
@@ -242,6 +257,7 @@ export class SignalRService {
     if (!this.isConnected) throw new Error('Hub not connected');
     console.log('[SignalR] leaveRoom invoked', roomCode);
     await this.hub!.invoke('LeaveRoomGroup', roomCode);
+    this.lastJoin = null;
   }
 
   async sendChat(content: string): Promise<void> {
