@@ -13,6 +13,7 @@ export const selectGameFinished = createSelector(selectRoomState, (s) => s.gameF
 export const selectWinnerId = createSelector(selectRoomState, (s) => s.winnerId);
 export const selectDidWin = createSelector(selectRoomState, (s) => s.didWin);
 export const selectLastUsername = createSelector(selectRoomState, (s) => s.lastUsername);
+export const selectMyId = createSelector(selectRoomState, (s) => s.myId);
 
 const playersSelectors = roomPlayersAdapter.getSelectors();
 const bulletsSelectors = roomBulletsAdapter.getSelectors();

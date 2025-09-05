@@ -27,6 +27,7 @@ export const roomActions = createActionGroup({
     'Roster Loaded': props<{ players: PlayerStateDto[] }>(),
 
     // Server→cliente
+    'Identity Received': props<{ userId: string }>(),
     'Player Joined': props<{ userId: string; username: string }>(),
     'Player Left': props<{ userId: string }>(),
     'Player Moved': props<{ player: PlayerStateDto | { playerId: string; x: number; y: number; rotation: number } }>(),

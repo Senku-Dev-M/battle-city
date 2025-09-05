@@ -17,6 +17,7 @@ export class SignalRService {
   private hub: HubConnection | null = null;
   private manualDisconnect = false;
 
+  readonly identity$ = new Subject<{ userId: string; username: string }>();
   readonly playerJoined$ = new Subject<{ userId: string; username: string }>();
   readonly playerLeft$ = new Subject<string>();
   readonly chatMessage$ = new Subject<ChatMessageDto>();
@@ -65,6 +66,11 @@ export class SignalRService {
       .build();
 
     // Event handlers
+    this.hub.on('identity', (payload: { userId: string; username: string }) => {
+      console.log('[SignalR] identity:', payload);
+      this.identity$.next(payload);
+    });
+
     this.hub.on('playerJoined', (payload) => {
       console.log('[SignalR] playerJoined:', payload);
       this.playerJoined$.next(payload);
