@@ -69,6 +69,8 @@ public partial class GameHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
         _tracker.Set(Context.ConnectionId, (await _rooms.GetByCodeAsync(roomCode))!.RoomId, roomCode, userId, uname);
 
+        await Clients.Caller.SendAsync("identity", new { userId, username = uname });
+
         if (!_playerLivesByRoom.ContainsKey(roomCode))
             _playerLivesByRoom[roomCode] = new();
         _playerLivesByRoom[roomCode][userId] = 3;
