@@ -4,7 +4,9 @@
   "main": "auth.test.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "multi-player": "node scenarios/multi-player.js"
+    "multi-player": "node scenarios/multi-player.js",
+    "artillery:flow": "artillery run artillery/flow.test.yml -o utils/results.json",
+    "artillery:influx": "node utils/results-to-influx.js"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +16,8 @@
     "@influxdata/influxdb-client": "^1.35.0",
     "@microsoft/signalr": "^9.0.6",
     "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.0"
   }
 }

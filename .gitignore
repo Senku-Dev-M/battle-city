@@ -44,3 +44,7 @@ packages/
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Node.js dependencies
+node_modules/
+**/node_modules/

@@ -1,0 +1,31 @@
+config:
+  target: "http://localhost:5284"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+  processor: "./flow-processor.js"
+scenarios:
+  - name: user-flow
+    flow:
+      - function: "generateUser"
+      - post:
+          url: "/api/v1/Auth/register"
+          json:
+            username: "{{ username }}"
+            email: "{{ email }}"
+            password: "{{ password }}"
+            confirmPassword: "{{ password }}"
+      - post:
+          url: "/api/v1/Auth/login"
+          json:
+            usernameOrEmail: "{{ username }}"
+            password: "{{ password }}"
+      - function: "generateRoom"
+      - post:
+          url: "/api/v1/Rooms"
+          json:
+            name: "{{ roomName }}"
+            maxPlayers: 4
+            isPublic: true
+      - get:
+          url: "/api/v1/Rooms"
