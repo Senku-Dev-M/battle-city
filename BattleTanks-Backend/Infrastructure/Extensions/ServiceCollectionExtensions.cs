@@ -1,12 +1,11 @@
 using Application.Interfaces;
 using Application.Services;
-using Infrastructure.Interfaces;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Services;
+using Infrastructure.Interfaces;
 using Infrastructure.SignalR.Abstractions;
 using Infrastructure.SignalR.Services;
-using Infrastructure.Interfaces;
 using Infrastructure.Configuration;
 using StackExchange.Redis;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +25,18 @@ public static class ServiceCollectionExtensions
         // Obtener la cadena de conexión de Redis (si está configurada) antes de registrar los servicios
         var redisConnectionString = configuration.GetConnectionString("Redis")
             ?? configuration.GetSection("RedisOptions").GetValue<string>("ConnectionString");
+
+        if (!string.IsNullOrEmpty(redisConnectionString))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+            });
+        }
+        else
+        {
+            services.AddDistributedMemoryCache();
+        }
 
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<IPlayerRepository, EfPlayerRepository>();

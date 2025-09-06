@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Profiling;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,11 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+Microsoft.Extensions.DependencyInjection.MvcExtensions.AddMiniProfiler(builder.Services, options =>
+{
+    options.RouteBasePath = "/profiler";
+}).AddEntityFramework();
 
 // JWT options
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
@@ -123,6 +130,7 @@ app.UseRouting();
 app.UseCors("FrontDev");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiniProfiler();
 
 app.UseEndpoints(endpoints =>
 {
