@@ -8,7 +8,7 @@ async function runScenario() {
   const API_URL = process.env.API_URL || 'http://localhost:5284';
   const SIGNALR_URL = process.env.SIGNALR_URL || 'http://localhost:5284/game-hub';
   const INFLUX_URL = process.env.INFLUX_URL || 'http://localhost:8086';
-  const INFLUX_TOKEN = process.env.INFLUX_TOKEN || 'battletanks-token';
+  const INFLUX_TOKEN = process.env.INFLUX_TOKEN || 'htt1gQEdOGoYX1Ol-PtU9wJ4KJ1bPSLhYxZ-2gJehw4SZBjHoQr32EMXG8fyZ2sJrICDMsHnjqcOna96qkV7Zw==';
   const INFLUX_ORG = process.env.INFLUX_ORG || 'battletanks';
   const INFLUX_BUCKET = process.env.INFLUX_BUCKET || 'k6';
 
