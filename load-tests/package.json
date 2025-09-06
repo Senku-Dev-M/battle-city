@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "multi-player": "node scenarios/multi-player.js",
     "artillery:flow": "artillery run artillery/flow.test.yml -o utils/results.json",
-    "artillery:influx": "node utils/results-to-influx.js"
+    "artillery:influx": "node utils/results-to-influx.js",
+    "k6:flow": "k6 run --out influxdb=http://localhost:8086?org=k6&bucket=battletanks&token=LgvCKeRz_F76MtplroS43YMcvHpq75y3WawHOPyjTHzJWcSRhvN1VY3lSDpMHHGi7_wZF48NJMSnO8sEncvOHw== k6/flow.test.js"
   },
   "keywords": [],
   "author": "",
