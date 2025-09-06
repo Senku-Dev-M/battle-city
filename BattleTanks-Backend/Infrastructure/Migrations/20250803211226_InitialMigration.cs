@@ -55,7 +55,6 @@ namespace Infrastructure.Migrations
                     Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     GamesPlayed = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     GamesWon = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     TotalScore = table.Column<int>(type: "integer", nullable: false, defaultValue: 0)
