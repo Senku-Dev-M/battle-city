@@ -1,5 +1,6 @@
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const fs = require('fs');
+const path = require('path');
 
 const client = new InfluxDB({
   url: 'http://localhost:8086',
@@ -9,7 +10,8 @@ const client = new InfluxDB({
 const writeApi = client.getWriteApi('battletanks', 'k6');
 
 // Cargar el archivo results.json exportado de Artillery
-const results = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+const resultsPath = path.join(__dirname, 'results.json');
+const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
 // Recorremos las métricas intermedias
 results.intermediate.forEach((entry, idx) => {
