@@ -27,13 +27,27 @@ async function runScenario() {
   const room = await createRoom(API_URL, token1, 'loadtest-room', 4, true, user1);
   const roomCode = room.roomCode || room.RoomCode;
 
-  await Promise.all([
+  const results = await Promise.all([
     play(SIGNALR_URL, token1, roomCode, user1, writeApi),
     play(SIGNALR_URL, token2, roomCode, user2, writeApi)
   ]);
 
   await writeApi.close();
-  console.log('Scenario completed');
+
+  results.forEach(r => {
+    const avgMove = r.moves.reduce((a, b) => a + b, 0) / r.moves.length;
+    console.log(`${r.username} -> total: ${r.total} ms, avg move: ${avgMove.toFixed(2)} ms`);
+  });
+
+  const avgTotal = results.reduce((sum, r) => sum + r.total, 0) / results.length;
+  const avgMoveAll = results.reduce((sum, r) => {
+    return sum + r.moves.reduce((a, b) => a + b, 0) / r.moves.length;
+  }, 0) / results.length;
+
+  console.log('Summary:', {
+    averageTotalLatency: Number(avgTotal.toFixed(2)),
+    averageMoveLatency: Number(avgMoveAll.toFixed(2))
+  });
 }
 
 runScenario().catch(err => {

@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 
 async function createRoom(apiUrl, token, name, maxPlayers = 4, isPublic = true, creatorName = null) {
+  const start = Date.now();
   const res = await fetch(`${apiUrl}/api/v1/Rooms`, {
     method: 'POST',
     headers: {
@@ -15,6 +16,8 @@ async function createRoom(apiUrl, token, name, maxPlayers = 4, isPublic = true, 
     throw new Error('Failed to create room: ' + JSON.stringify(data));
   }
 
+  const code = data.roomCode || data.RoomCode;
+  console.log(`Room ${code} created in ${Date.now() - start} ms`);
   return data; // Expected to contain roomId and roomCode
 }
 

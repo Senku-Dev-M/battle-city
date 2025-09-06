@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 
 async function registerUser(apiUrl, username, email, password) {
+  const start = Date.now();
   const res = await fetch(`${apiUrl}/api/v1/Auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12,7 +13,9 @@ async function registerUser(apiUrl, username, email, password) {
     throw new Error(`Failed to register ${username}: ${res.status} ${data}`);
   }
 
-  return res.json();
+  const data = await res.json();
+  console.log(`Registered ${username} in ${Date.now() - start} ms`);
+  return data;
 }
 
 module.exports = { registerUser };

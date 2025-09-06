@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 
 async function loginUser(apiUrl, usernameOrEmail, password) {
+  const start = Date.now();
   const res = await fetch(`${apiUrl}/api/v1/Auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -14,7 +15,9 @@ async function loginUser(apiUrl, usernameOrEmail, password) {
 
   const setCookie = res.headers.get('set-cookie');
   if (setCookie) {
-    return setCookie.split(';')[0].split('=')[1];
+    const token = setCookie.split(';')[0].split('=')[1];
+    console.log(`Logged in ${usernameOrEmail} in ${Date.now() - start} ms`);
+    return token;
   }
 
   const data = await res.json();
