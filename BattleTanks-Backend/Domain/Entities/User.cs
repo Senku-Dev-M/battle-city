@@ -7,7 +7,6 @@ public class User
     public string Email { get; private set; }
     public string PasswordHash { get; private set; }
     public DateTime CreatedAt { get; private set; }
-    public DateTime LastLoginAt { get; private set; }
     
     public int GamesPlayed { get; private set; }
     public int GamesWon { get; private set; }
@@ -27,16 +26,10 @@ public class User
             Email = email.ToLowerInvariant(),
             PasswordHash = passwordHash,
             CreatedAt = DateTime.UtcNow,
-            LastLoginAt = DateTime.UtcNow,
             GamesPlayed = 0,
             GamesWon = 0,
             TotalScore = 0
         };
-    }
-    
-    public void UpdateLastLogin()
-    {
-        LastLoginAt = DateTime.UtcNow;
     }
     
     public void AddGameResult(bool won, int score)

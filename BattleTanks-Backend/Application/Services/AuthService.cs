@@ -45,9 +45,6 @@ public class AuthService : IAuthService
         if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials");
 
-        user.UpdateLastLogin();
-        await _userRepository.UpdateAsync(user);
-
         return user;
     }
 
