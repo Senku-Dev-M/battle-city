@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { PlayerStateDto } from '../../core/models/game.models';
 
 import { roomActions } from './store/room.actions';
 import {
@@ -47,6 +48,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * state (lives and alive status).
    */
   players      = toSignal(this.store.select(selectPlayers), { initialValue: [] });
+
+  trackPlayer = (_: number, p: PlayerStateDto) => p.playerId;
 
   /**
    * Derives the current player's state by matching either the user id or username (case‑insensitive)

@@ -33,7 +33,7 @@
               <div class="mb-4 text-xs text-yellow-300">
                 <h2 class="font-bold mb-1">Jugadores</h2>
                 <ul class="space-y-1">
-                  @for (p of players(); track p.playerId) {
+                  @for (p of players(); track trackPlayer) {
                     <li class="flex items-center">
                       <span class="inline-block w-3 h-3 mr-1 rounded-sm" [style.background]="p.color"></span>
                       {{ p.username }} - Vidas: {{ p.lives }} - Puntos: {{ p.score }}
@@ -53,7 +53,7 @@
         <div class="text-xs text-yellow-300">
           <h2 class="font-bold mb-1">Jugadores</h2>
           <ul class="space-y-1">
-            @for (p of players(); track p.playerId) {
+            @for (p of players(); track trackPlayer) {
               <li class="flex items-center">
                 <span class="inline-block w-3 h-3 mr-1 rounded-sm" [style.background]="p.color"></span>
                 {{ p.username }} - {{ p.isReady ? 'Listo' : 'Esperando' }}

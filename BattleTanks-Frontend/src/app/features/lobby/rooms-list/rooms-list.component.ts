@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { selectRooms, selectRoomsLoading } from '../store/rooms.selectors';
 import { Router } from '@angular/router';
+import { RoomStateDto } from '../../../core/models/room.models';
 
 @Component({
   standalone: true,
@@ -19,6 +20,8 @@ export class RoomsListComponent {
 
   rooms   = toSignal(this.store.select(selectRooms), { initialValue: [] });
   loading = toSignal(this.store.select(selectRoomsLoading), { initialValue: false });
+
+  trackRoom = (_: number, room: RoomStateDto) => room.roomId;
 
   enter(code: string) {
     this.router.navigateByUrl(`/rooms/${encodeURIComponent(code)}`);

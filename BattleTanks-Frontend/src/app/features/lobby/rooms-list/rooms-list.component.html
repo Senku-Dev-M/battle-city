@@ -10,7 +10,7 @@
     <p class="text-blue-200 text-xs">No hay salas activas aún.</p>
   } @else {
     <div class="rooms-grid">
-      @for (room of rooms(); track room.roomId) {
+      @for (room of rooms(); track trackRoom) {
         <div class="room-item">
           <div class="room-info">
             <div class="room-code">Código: {{ room.roomCode }}</div>
