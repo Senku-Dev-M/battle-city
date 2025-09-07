@@ -22,8 +22,9 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
-	  <PackageReference Include="MQTTnet" Version="4.1.0.247" />
-	  <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
+          <PackageReference Include="MQTTnet" Version="4.1.0.247" />
+          <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.0" />
     <PackageReference Include="EFCore.BulkExtensions" Version="8.0.3" />
   </ItemGroup>
 
