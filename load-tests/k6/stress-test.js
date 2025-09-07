@@ -6,14 +6,15 @@ export const options = {
   duration: '60s',
 };
 
-const baseUrl = __ENV.API_URL || 'http://localhost:5000';
+const baseUrl = __ENV.API_URL || 'http://localhost:5284';
 
 export function setup() {
   for (let i = 1; i <= options.vus; i++) {
     const registerPayload = JSON.stringify({
       username: `user${i}`,
       email: `user${i}@test.com`,
-      password: 'P@ssw0rd!'
+      password: 'P@ssw0rd!',
+      confirmPassword: 'P@ssw0rd!'
     });
     http.post(`${baseUrl}/api/v1/Auth/register`, registerPayload, { headers: { 'Content-Type': 'application/json' } });
   }
