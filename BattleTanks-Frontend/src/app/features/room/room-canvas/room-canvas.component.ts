@@ -43,18 +43,17 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   get map() { return this.gameRoom.map(); }
 
   /**
-   * Determine if the current player still has lives left. Returns true if there is no user (before joining)
-   * or if their corresponding player state in the room indicates they are alive.
+   * Signal indicating if the current player still has lives left. Defaults to true before joining.
    */
-  private isCurrentPlayerAlive(): boolean {
-    const me   = this.me();
+  private isAlive = computed(() => {
+    const me = this.me();
     const roster = this.players();
     if (!me) return true;
-    const id   = me.id;
+    const id = me.id;
     const uname = me.username?.toLowerCase() ?? '';
     const p = roster.find(pl => pl.playerId === id || (pl.username?.toLowerCase() ?? '') === uname);
     return p ? p.isAlive : true;
-  }
+  });
 
   /**
    * Returns true if the current player has an active bullet in flight that has not yet been
@@ -123,7 +122,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   });
 
   private _stopInputEffect = effect(() => {
-    if (!this.isCurrentPlayerAlive()) {
+    if (!this.isAlive()) {
       this.pressed.clear();
     }
   });
@@ -176,7 +175,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   onDown(e: KeyboardEvent) {
     // Ignore input when the player has no lives left
-    if (!this.isCurrentPlayerAlive()) return;
+    if (!this.isAlive()) return;
     this.pressed.add(e.key.toLowerCase());
     if (e.code === 'Space') {
       // Only spawn a bullet if the player has no active bullets in flight
@@ -192,7 +191,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   @HostListener('window:keyup', ['$event'])
   onUp(e: KeyboardEvent) {
     // Ignore releases if the player is dead
-    if (!this.isCurrentPlayerAlive()) return;
+    if (!this.isAlive()) return;
     this.pressed.delete(e.key.toLowerCase());
   }
 
@@ -212,7 +211,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     if (this.pressed.has('d') || this.pressed.has('arrowright')) dx += 1;
     if (dx !== 0 || dy !== 0) {
       // Only update movement and send position if the current player is alive
-      if (this.isCurrentPlayerAlive()) {
+      if (this.isAlive()) {
         // Normalize direction vector
         const len = Math.hypot(dx, dy) || 1;
         const ndx = dx / len;

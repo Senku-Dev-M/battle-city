@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { selectChat } from '../store/room.selectors';
 import { roomActions } from '../store/room.actions';
+import { ChatMessageDto } from '../../../core/models/game.models';
 
 @Component({
   standalone: true,
@@ -19,6 +20,8 @@ export class ChatPanelComponent {
 
   chat = toSignal(this.store.select(selectChat), { initialValue: [] });
   input = signal('');
+
+  trackMessage = (_: number, msg: ChatMessageDto) => msg.messageId;
 
   send() {
     const content = this.input().trim();
