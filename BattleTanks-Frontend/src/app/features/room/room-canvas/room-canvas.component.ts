@@ -256,6 +256,20 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
         // bottom-right
         if (isBlocked(bottomIdx, rightIdx)) collided = true;
 
+        // Check collisions with other players to prevent overlap
+        if (!collided) {
+          const myId = me?.id ?? null;
+          for (const other of roster) {
+            if (!other.isAlive) continue;
+            if (other.playerId === myId) continue;
+            const dist = Math.hypot(newX - other.x, newY - other.y);
+            if (dist < radius * 2) {
+              collided = true;
+              break;
+            }
+          }
+        }
+
         // Update rotation regardless of collision
         this.rot.set(Math.atan2(ndy, ndx));
 
